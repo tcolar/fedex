@@ -18,9 +18,20 @@ const (
 
 // Utility to retrieve data from Fedex API
 // Bypassing painful proper SOAP implementation and just crafting minimal XML messages to get the data we need.
+// Fedex WSDL docs here: http://images.fedex.com/us/developer/product/WebServices/MyWebHelp/DeveloperGuide2012.pdf
 type Fedex struct {
 	Key, Password, Account, Meter string
 	FedexUrl                      string
+}
+
+// Return tracking info for a specific Fedex tracking number
+func (f Fedex) TrackByNumber(carrierCode string, trackingNo string) (reply TrackReply, err error) {
+	reqXml := soapNumberTracking(f, carrierCode, trackingNo)
+	content, err := f.PostXml(f.FedexUrl+"/trck", reqXml)
+	if err != nil {
+		return reply, err
+	}
+	return f.ParseTrackReply(content)
 }
 
 // Return tracking info for a specific shipper reference

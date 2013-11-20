@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-// Just some example
+// Examples
 func main() {
 	// You will need to fill in all those with your actual Fedex web service data
 	fedex := Fedex{
@@ -19,9 +19,19 @@ func main() {
 
 	trackByReference(fedex, "replaceWithYourOrderRef", "replaceWithYourAccount")
 	trackByPo(fedex, "123", "99032", "us")
+	trackByNumber(fedex, "366849311565474")
 }
 
-//Looking up some tracking info by reference
+// Looking up some tracking info by Fedex trackig number
+func trackByNumber(fedex Fedex, trackingNo string) {
+	reply, err := fedex.TrackByNumber("FDXE", trackingNo)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dump(reply)
+}
+
+// Looking up some tracking info by reference
 func trackByReference(fedex Fedex, ref string, account string) {
 	reply, err := fedex.TrackByShipperRef("FDXE", ref, account)
 	if err != nil {
@@ -30,7 +40,7 @@ func trackByReference(fedex Fedex, ref string, account string) {
 	dump(reply)
 }
 
-//Looking up some tracking info by reference
+// Looking up some tracking info by Shipper PO number + Destination Zip
 func trackByPo(fedex Fedex, po string, postalCode string, countryCode string) {
 	reply, err := fedex.TrackByPo("FDXE", po, postalCode, countryCode)
 	if err != nil {

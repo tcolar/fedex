@@ -8,12 +8,27 @@ import (
 
 // SOAP monkey patching
 
+// Track by Tracking number
+func soapNumberTracking(fedex Fedex, carrierCode string, trackingNo string) string {
+	return soapHead(fedex) +
+		fmt.Sprintf(`
+<q0:SelectionDetails>
+  <q0:CarrierCode>%s</q0:CarrierCode>
+  <q0:PackageIdentifier>
+    <q0:Type>TRACKING_NUMBER_OR_DOORTAG</q0:Type>
+    <q0:Value>%s</q0:Value>
+  </q0:PackageIdentifier>
+</q0:SelectionDetails>`, carrierCode, trackingNo) +
+		FEDEX_SOAP_TAIL
+}
+
+// Track by PO/Zip
 func soapPoTracking(fedex Fedex, carrierCode string, po string,
 	postalCode string, countryCode string) string {
 	return soapHead(fedex) +
 		fmt.Sprintf(`
 <q0:SelectionDetails>
-<q0:CarrierCode>%s</q0:CarrierCode>
+  <q0:CarrierCode>%s</q0:CarrierCode>
   <q0:PackageIdentifier>
     <q0:Type>PURCHASE_ORDER</q0:Type>
     <q0:Value>%s</q0:Value>
@@ -26,12 +41,13 @@ func soapPoTracking(fedex Fedex, carrierCode string, po string,
 		FEDEX_SOAP_TAIL
 }
 
+// Track by ShipperRef / ShipperAccount
 func soapRefTracking(fedex Fedex, carrierCode string, ref string,
 	shipAccount string) string {
 	return soapHead(fedex) +
 		fmt.Sprintf(`
 <q0:SelectionDetails>
-<q0:CarrierCode>%s</q0:CarrierCode>
+  <q0:CarrierCode>%s</q0:CarrierCode>
   <q0:PackageIdentifier>
     <q0:Type>SHIPPER_REFERENCE</q0:Type>
     <q0:Value>%s</q0:Value>
