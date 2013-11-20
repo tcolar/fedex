@@ -23,7 +23,7 @@ func main() {
 
 //Looking up some tracking info by reference
 func trackByReference(fedex Fedex, ref string, account string) {
-	reply, err := fedex.TrackByShipperRef(ref, account)
+	reply, err := fedex.TrackByShipperRef("FDXE", ref, account)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func trackByReference(fedex Fedex, ref string, account string) {
 
 //Looking up some tracking info by reference
 func trackByPo(fedex Fedex, po string, postalCode string, countryCode string) {
-	reply, err := fedex.TrackByPo(po, postalCode, countryCode)
+	reply, err := fedex.TrackByPo("FDXE", po, postalCode, countryCode)
 	if err != nil {
 		log.Fatal(err)
 	}
