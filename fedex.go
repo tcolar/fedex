@@ -5,6 +5,7 @@ package fedex
 import (
 	"encoding/xml"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -77,4 +78,16 @@ func (f Fedex) PostXml(url string, xml string) (content []byte, err error) {
 	}
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
+}
+
+// Dump some of the query resuts as an example
+func Dump(reply TrackReply) {
+	log.Print(reply)
+	// Dummy example of using the data
+	log.Printf("Successs : %t", !reply.Failed())
+	if !reply.Failed() {
+		tracking := reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumber
+		log.Printf("Tracking Number: %s", tracking)
+		log.Print(reply.CompletedTrackDetails[0].TrackDetails[0].ActualDeliveryAddress)
+	}
 }

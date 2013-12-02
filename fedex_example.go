@@ -28,7 +28,7 @@ func trackByNumber(fedex Fedex, trackingNo string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dump(reply)
+	Dump(reply)
 }
 
 // Looking up some tracking info by reference
@@ -37,7 +37,7 @@ func trackByReference(fedex Fedex, ref string, account string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dump(reply)
+	Dump(reply)
 }
 
 // Looking up some tracking info by Shipper PO number + Destination Zip
@@ -46,17 +46,5 @@ func trackByPo(fedex Fedex, po string, postalCode string, countryCode string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dump(reply)
-}
-
-// Dump some of the query resuts as an example
-func dump(reply TrackReply) {
-	log.Print(reply)
-	// Dummy example of using the data
-	log.Printf("Successs : %t", !reply.Failed())
-	if !reply.Failed() {
-		tracking := reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumber
-		log.Printf("Tracking Number: %s", tracking)
-		log.Print(reply.CompletedTrackDetails[0].TrackDetails[0].ActualDeliveryAddress)
-	}
+	Dump(reply)
 }
