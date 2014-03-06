@@ -3,7 +3,7 @@ package fedex
 
 // Structures to unmarshall the Fedex SOAP answer into
 
-// Track reply root (`xml:"Body>TrackReply"`)
+// TrackReply : Track reply root (`xml:"Body>TrackReply"`)
 type TrackReply struct {
 	HighestSeverity       string
 	Notifications         []Notification

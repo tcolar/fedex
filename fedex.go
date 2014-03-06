@@ -1,11 +1,11 @@
 // History: Nov 20 13 tcolar Creation
 
+// fedex provides access to (some) FedEx Soap API's and unmarshall answers into Go structures
 package fedex
 
 import (
 	"encoding/xml"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -17,7 +17,7 @@ const (
 	FEDEX_TEST_TRACKING = "123456789012"
 )
 
-// Utility to retrieve data from Fedex API
+// Fedex : Utility to retrieve data from Fedex API
 // Bypassing painful proper SOAP implementation and just crafting minimal XML messages to get the data we need.
 // Fedex WSDL docs here: http://images.fedex.com/us/developer/product/WebServices/MyWebHelp/DeveloperGuide2012.pdf
 type Fedex struct {
@@ -25,7 +25,7 @@ type Fedex struct {
 	FedexUrl                      string
 }
 
-// Return tracking info for a specific Fedex tracking number
+// TrackByNumber : Returns tracking info for a specific Fedex tracking number
 func (f Fedex) TrackByNumber(carrierCode string, trackingNo string) (reply TrackReply, err error) {
 	reqXml := soapNumberTracking(f, carrierCode, trackingNo)
 	content, err := f.PostXml(f.FedexUrl+"/trck", reqXml)
@@ -35,7 +35,7 @@ func (f Fedex) TrackByNumber(carrierCode string, trackingNo string) (reply Track
 	return f.ParseTrackReply(content)
 }
 
-// Return tracking info for a specific shipper reference
+// TrackByShipperRef : Return tracking info for a specific shipper reference
 // ShipperRef is usually an order ID or other unique identifier
 // ShipperAccountNumber is the Fedex account number of the shipper
 func (f Fedex) TrackByShipperRef(carrierCode string, shipperRef string,
@@ -48,7 +48,7 @@ func (f Fedex) TrackByShipperRef(carrierCode string, shipperRef string,
 	return f.ParseTrackReply(content)
 }
 
-// Return tracking info for a specific Purchase Order (often the OrderId)
+// TrackByPo : Returns tracking info for a specific Purchase Order (often the OrderId)
 // Note that Fedex requires the Destination Postal Code & country
 //   to match when making PO queries
 func (f Fedex) TrackByPo(carrierCode string, po string, postalCode string,
@@ -72,22 +72,10 @@ func (f Fedex) ParseTrackReply(xmlResp []byte) (reply TrackReply, err error) {
 
 // Post Xml to Fedex API and return response
 func (f Fedex) PostXml(url string, xml string) (content []byte, err error) {
-	resp, err := http.Post(f.FedexUrl, "text/xml", strings.NewReader(xml))
+	resp, err := http.Post(url, "text/xml", strings.NewReader(xml))
 	if err != nil {
 		return content, err
 	}
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
-}
-
-// Dump some of the query resuts as an example
-func Dump(reply TrackReply) {
-	log.Print(reply)
-	// Dummy example of using the data
-	log.Printf("Successs : %t", !reply.Failed())
-	if !reply.Failed() {
-		tracking := reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumber
-		log.Printf("Tracking Number: %s", tracking)
-		log.Print(reply.CompletedTrackDetails[0].TrackDetails[0].ActualDeliveryAddress)
-	}
 }
