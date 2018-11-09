@@ -5,6 +5,7 @@ package fedex
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -12,9 +13,13 @@ import (
 
 const (
 	// Convenience constants for standard Fedex API url's
-	FEDEX_API_URL       = "https://ws.fedex.com:443/web-services"
-	FEDEX_API_TEST_URL  = "https://wsbeta.fedex.com:443/web-services"
-	FEDEX_TEST_TRACKING = "123456789012"
+	FEDEX_API_URL             = "https://ws.fedex.com:443/web-services"
+	FEDEX_API_TEST_URL        = "https://wsbeta.fedex.com:443/web-services"
+	CarrierCodeExpress        = "FDXE"
+	CarrierCodeGround         = "FDXG"
+	CarrierCodeFreight        = "FXFR"
+	CarrierCodeSmartPost      = "FXSP"
+	CarrierCodeCustomCritical = "FXCC"
 )
 
 // Fedex : Utility to retrieve data from Fedex API
@@ -23,6 +28,37 @@ const (
 type Fedex struct {
 	Key, Password, Account, Meter string
 	FedexUrl                      string
+}
+
+func (f Fedex) wrapSoapRequest(body string) string {
+	return fmt.Sprintf(`
+		<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v16="http://fedex.com/ws/track/v16">
+		<soapenv:Body>
+			%s
+		</soapenv:Body>
+		</soapenv:Envelope>
+	`, body)
+}
+
+func (f Fedex) soapCreds() string {
+	return fmt.Sprintf(`
+		<v16:WebAuthenticationDetail>
+			<v16:UserCredential>
+				<v16:Key>%s</v16:Key>
+				<v16:Password>%s</v16:Password>
+			</v16:UserCredential>
+		</v16:WebAuthenticationDetail>
+		<v16:ClientDetail>
+			<v16:AccountNumber>%s</v16:AccountNumber>
+			<v16:MeterNumber>%s</v16:MeterNumber>
+		</v16:ClientDetail>
+		<v16:Version>
+			<v16:ServiceId>trck</v16:ServiceId>
+			<v16:Major>16</v16:Major>
+			<v16:Intermediate>0</v16:Intermediate>
+			<v16:Minor>0</v16:Minor>
+		</v16:Version>
+	`, f.Key, f.Password, f.Account, f.Meter)
 }
 
 // TrackByNumber : Returns tracking info for a specific Fedex tracking number
