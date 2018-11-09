@@ -32,7 +32,7 @@ type Fedex struct {
 
 func (f Fedex) wrapSoapRequest(body string) string {
 	return fmt.Sprintf(`
-		<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v16="http://fedex.com/ws/track/v16">
+		<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:q0="http://fedex.com/ws/track/v16">
 		<soapenv:Body>
 			%s
 		</soapenv:Body>
@@ -42,22 +42,22 @@ func (f Fedex) wrapSoapRequest(body string) string {
 
 func (f Fedex) soapCreds() string {
 	return fmt.Sprintf(`
-		<v16:WebAuthenticationDetail>
-			<v16:UserCredential>
-				<v16:Key>%s</v16:Key>
-				<v16:Password>%s</v16:Password>
-			</v16:UserCredential>
-		</v16:WebAuthenticationDetail>
-		<v16:ClientDetail>
-			<v16:AccountNumber>%s</v16:AccountNumber>
-			<v16:MeterNumber>%s</v16:MeterNumber>
-		</v16:ClientDetail>
-		<v16:Version>
-			<v16:ServiceId>trck</v16:ServiceId>
-			<v16:Major>16</v16:Major>
-			<v16:Intermediate>0</v16:Intermediate>
-			<v16:Minor>0</v16:Minor>
-		</v16:Version>
+		<q0:WebAuthenticationDetail>
+			<q0:UserCredential>
+				<q0:Key>%s</q0:Key>
+				<q0:Password>%s</q0:Password>
+			</q0:UserCredential>
+		</q0:WebAuthenticationDetail>
+		<q0:ClientDetail>
+			<q0:AccountNumber>%s</q0:AccountNumber>
+			<q0:MeterNumber>%s</q0:MeterNumber>
+		</q0:ClientDetail>
+		<q0:Version>
+			<q0:ServiceId>trck</q0:ServiceId>
+			<q0:Major>16</q0:Major>
+			<q0:Intermediate>0</q0:Intermediate>
+			<q0:Minor>0</q0:Minor>
+		</q0:Version>
 	`, f.Key, f.Password, f.Account, f.Meter)
 }
 

@@ -9,23 +9,23 @@ import (
 // Track by Tracking number
 func trackRequest(fedex Fedex, body string) string {
 	return fedex.wrapSoapRequest(fmt.Sprintf(`
-		<v16:TrackRequest>
+		<q0:TrackRequest>
 			%s
 			%s
-			<v16:ProcessingOptions>INCLUDE_DETAILED_SCANS</v16:ProcessingOptions>
-		</v16:TrackRequest>
+			<q0:ProcessingOptions>INCLUDE_DETAILED_SCANS</q0:ProcessingOptions>
+		</q0:TrackRequest>
 	`, fedex.soapCreds(), body))
 }
 
 func soapNumberTracking(fedex Fedex, carrierCode string, trackingNo string) string {
 	return trackRequest(fedex, fmt.Sprintf(`
-		<v16:SelectionDetails>
-			<v16:CarrierCode>%s</v16:CarrierCode>
-			<v16:PackageIdentifier>
-				<v16:Type>TRACKING_NUMBER_OR_DOORTAG</v16:Type>
-				<v16:Value>%s</v16:Value>
-			</v16:PackageIdentifier>
-		</v16:SelectionDetails>
+		<q0:SelectionDetails>
+			<q0:CarrierCode>%s</q0:CarrierCode>
+			<q0:PackageIdentifier>
+				<q0:Type>TRACKING_NUMBER_OR_DOORTAG</q0:Type>
+				<q0:Value>%s</q0:Value>
+			</q0:PackageIdentifier>
+		</q0:SelectionDetails>
 	`, carrierCode, trackingNo))
 }
 
@@ -33,17 +33,17 @@ func soapNumberTracking(fedex Fedex, carrierCode string, trackingNo string) stri
 func soapPoTracking(fedex Fedex, carrierCode string, po string,
 	postalCode string, countryCode string) string {
 	return trackRequest(fedex, fmt.Sprintf(`
-		<v16:SelectionDetails>
-			<v16:CarrierCode>%s</v16:CarrierCode>
-			<v16:PackageIdentifier>
-				<v16:Type>PURCHASE_ORDER</v16:Type>
-				<v16:Value>%s</v16:Value>
-			</v16:PackageIdentifier>
-			<v16:Destination>
-				<v16:PostalCode>%s</v16:PostalCode>
-				<v16:CountryCode>%s</v16:CountryCode>
-			</v16:Destination>
-		</v16:SelectionDetails>
+		<q0:SelectionDetails>
+			<q0:CarrierCode>%s</q0:CarrierCode>
+			<q0:PackageIdentifier>
+				<q0:Type>PURCHASE_ORDER</q0:Type>
+				<q0:Value>%s</q0:Value>
+			</q0:PackageIdentifier>
+			<q0:Destination>
+				<q0:PostalCode>%s</q0:PostalCode>
+				<q0:CountryCode>%s</q0:CountryCode>
+			</q0:Destination>
+		</q0:SelectionDetails>
 	`, carrierCode, po, postalCode, countryCode))
 }
 
@@ -51,13 +51,13 @@ func soapPoTracking(fedex Fedex, carrierCode string, po string,
 func soapRefTracking(fedex Fedex, carrierCode string, ref string,
 	shipAccount string) string {
 	return trackRequest(fedex, fmt.Sprintf(`
-		<v16:SelectionDetails>
-			<v16:CarrierCode>%s</v16:CarrierCode>
-			<v16:PackageIdentifier>
-				<v16:Type>SHIPPER_REFERENCE</v16:Type>
-				<v16:Value>%s</v16:Value>
-			</v16:PackageIdentifier>
-			<v16:ShipmentAccountNumber>%s</v16:ShipmentAccountNumber>
-		</v16:SelectionDetails>
+		<q0:SelectionDetails>
+			<q0:CarrierCode>%s</q0:CarrierCode>
+			<q0:PackageIdentifier>
+				<q0:Type>SHIPPER_REFERENCE</q0:Type>
+				<q0:Value>%s</q0:Value>
+			</q0:PackageIdentifier>
+			<q0:ShipmentAccountNumber>%s</q0:ShipmentAccountNumber>
+		</q0:SelectionDetails>
 	`, carrierCode, ref, shipAccount))
 }
