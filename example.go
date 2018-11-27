@@ -4,13 +4,15 @@ package fedex
 
 import (
 	"log"
+
+	"github.com/happyreturns/fedex/models"
 )
 
 // Examples
 func main() {
 	// You will need to fill in all those with your actual Fedex web service data
 	fedex := Fedex{
-		FedexUrl: FEDEX_API_TEST_URL, // OR FEDEX_API_URL
+		FedexURL: FedexAPITestURL, // OR FedexAPIURL
 		Key:      "replaceWithYourKey",
 		Password: "replaceWithYourPass",
 		Account:  "replaceWithYourAccount",
@@ -28,7 +30,7 @@ func trackByNumber(fedex Fedex, trackingNo string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	Dump(reply)
+	Dump(*reply)
 }
 
 // Looking up some tracking info by reference
@@ -50,7 +52,7 @@ func trackByPo(fedex Fedex, po string, postalCode string, countryCode string) {
 }
 
 // Dump : Dumps some of the query resuts for testing
-func Dump(reply TrackReply) {
+func Dump(reply models.TrackReply) {
 	log.Print(reply)
 	// Dummy example of using the data
 	log.Printf("Successs : %t", !reply.Failed())
