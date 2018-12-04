@@ -51,12 +51,12 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 		serviceType = "FEDEX_GROUND"
 		weight = models.Weight{
 			Units: "LB",
-			Value: 1,
+			Value: 13,
 		}
 		dimensions = models.Dimensions{
-			Length: 5,
-			Width:  5,
-			Height: 5,
+			Length: 13,
+			Width:  13,
+			Height: 13,
 			Units:  "IN",
 		}
 
