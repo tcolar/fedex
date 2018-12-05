@@ -1,12 +1,13 @@
 package fedex
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
+func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation models.Address, fromContact, toContact models.Contact, smartPostKey string) (models.Envelope, error) {
 	var serviceType string
 	var weight models.Weight
 	var dimensions models.Dimensions
@@ -19,6 +20,9 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 
 	switch shipmentType {
 	case "SMART_POST":
+		if _, ok := f.SmartPostCreds[smartPostKey]; !ok {
+			return models.Envelope{}, fmt.Errorf("invalid smart post key: %s", smartPostKey)
+		}
 		serviceType = "SMART_POST"
 		weight = models.Weight{
 			Units: "LB",
@@ -31,15 +35,15 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			Units:  "IN",
 		}
 
-		account = f.SmartPostAccount
-		key = f.SmartPostKey
-		password = f.SmartPostPassword
-		meter = f.SmartPostMeter
+		account = f.SmartPostCreds[smartPostKey].Account
+		key = f.SmartPostCreds[smartPostKey].Key
+		password = f.SmartPostCreds[smartPostKey].Password
+		meter = f.SmartPostCreds[smartPostKey].Meter
 
 		smartPostDetail = &models.SmartPostDetail{
 			Indicia:              "PARCEL_RETURN",
 			AncillaryEndorsement: "ADDRESS_CORRECTION",
-			HubID:                f.SmartPostHubID,
+			HubID:                f.SmartPostCreds[smartPostKey].HubID,
 		}
 		specialServicesRequested = &models.SpecialServicesRequested{
 			SpecialServiceTypes: []string{"RETURN_SHIPMENT"},
@@ -140,13 +144,5 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 		}{
 			ProcessShipmentRequest: req,
 		},
-	}
-}
-
-func (f Fedex) shipGroundSOAPRequest(fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
-	return f.shipmentEnvelope("FEDEX_GROUND", fromLocation, toLocation, fromContact, toContact)
-}
-
-func (f Fedex) shipSmartPostSOAPRequest(fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
-	return f.shipmentEnvelope("SMART_POST", fromLocation, toLocation, fromContact, toContact)
+	}, nil
 }

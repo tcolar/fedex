@@ -24,6 +24,15 @@ const (
 	CarrierCodeCustomCritical = "FXCC"
 )
 
+// SmartPostCred are the credentials needed for Smart Post labels
+type SmartPostCred struct {
+	Key      string
+	Password string
+	Account  string
+	Meter    string
+	HubID    string
+}
+
 // Fedex : Utility to retrieve data from Fedex API
 // Bypassing painful proper SOAP implementation and just crafting minimal XML messages to get the data we need.
 // Fedex WSDL docs here: http://images.fedex.com/us/developer/product/WebServices/MyWebHelp/DeveloperGuide2012.pdf
@@ -33,11 +42,7 @@ type Fedex struct {
 	Account  string
 	Meter    string
 
-	SmartPostKey      string
-	SmartPostPassword string
-	SmartPostAccount  string
-	SmartPostMeter    string
-	SmartPostHubID    string
+	SmartPostCreds map[string]SmartPostCred
 
 	FedexURL string
 }
@@ -137,10 +142,13 @@ func (f Fedex) TrackByNumber(carrierCode string, trackingNo string) (*models.Tra
 func (f Fedex) ShipGround(fromAddress models.Address, toAddress models.Address,
 	fromContact models.Contact, toContact models.Contact) (*models.ProcessShipmentReply, error) {
 
-	request := f.shipGroundSOAPRequest(fromAddress, toAddress, fromContact, toContact)
-	response := &models.ShipResponseEnvelope{}
+	request, err := f.shipmentEnvelope("FEDEX_GROUND", fromAddress, toAddress, fromContact, toContact, "")
+	if err != nil {
+		return nil, fmt.Errorf("create shipment request: %s", err)
+	}
 
-	err := f.makeRequestAndUnmarshal("/ship/v23", request, response)
+	response := &models.ShipResponseEnvelope{}
+	err = f.makeRequestAndUnmarshal("/ship/v23", request, response)
 	if err != nil {
 		return nil, fmt.Errorf("make ship ground request and unmarshal: %s", err)
 	}
@@ -149,16 +157,20 @@ func (f Fedex) ShipGround(fromAddress models.Address, toAddress models.Address,
 
 // ShipSmartPost : Creates a Smart Post return shipment
 func (f Fedex) ShipSmartPost(fromAddress models.Address, toAddress models.Address,
-	fromContact models.Contact, toContact models.Contact) (*models.ProcessShipmentReply, error) {
+	fromContact models.Contact, toContact models.Contact, smartPostKey string) (*models.ProcessShipmentReply, error) {
 
-	request := f.shipSmartPostSOAPRequest(fromAddress, toAddress, fromContact, toContact)
+	request, err := f.shipmentEnvelope("SMART_POST", fromAddress, toAddress, fromContact, toContact, smartPostKey)
+	if err != nil {
+		return nil, fmt.Errorf("create shipment request: %s", err)
+	}
+
 	response := &models.ShipResponseEnvelope{}
-
-	err := f.makeRequestAndUnmarshal("/ship/v23", request, response)
+	err = f.makeRequestAndUnmarshal("/ship/v23", request, response)
 	if err != nil {
 		return nil, fmt.Errorf("make ship smart post request and unmarshal: %s", err)
 	}
 	return &response.Reply, nil
+
 }
 
 // Rate : Gets the estimated rates for a shipment
