@@ -251,27 +251,28 @@ type TrackReply struct {
 	CompletedTrackDetails []CompletedTrackDetail
 }
 
-func (tr TrackReply) searchDatesOrTimes(dateOrTimeType string) time.Time {
+func (tr *TrackReply) searchDatesOrTimes(dateOrTimeType string) *time.Time {
 	for _, completedTrackDetail := range tr.CompletedTrackDetails {
 		for _, trackDetail := range completedTrackDetail.TrackDetails {
 			for _, dateOrTime := range trackDetail.DatesOrTimes {
 				if dateOrTime.Type == dateOrTimeType {
-					return time.Time(dateOrTime.DateOrTimestamp)
+					ts := time.Time(dateOrTime.DateOrTimestamp)
+					return &ts
 				}
 			}
 		}
 	}
 
-	return time.Time{}
+	return nil
 }
 
 // ActualDelivery returns the first ACTUAL_DELIVERY timestamp
-func (tr TrackReply) ActualDelivery() time.Time {
+func (tr *TrackReply) ActualDelivery() *time.Time {
 	return tr.searchDatesOrTimes("ACTUAL_DELIVERY")
 }
 
 // EstimatedDelivery returns the first ESTIMATED_DELIVERY timestamp
-func (tr TrackReply) EstimatedDelivery() time.Time {
+func (tr *TrackReply) EstimatedDelivery() *time.Time {
 	return tr.searchDatesOrTimes("ESTIMATED_DELIVERY")
 }
 
