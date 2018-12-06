@@ -276,6 +276,11 @@ func (tr *TrackReply) EstimatedDelivery() *time.Time {
 	return tr.searchDatesOrTimes("ESTIMATED_DELIVERY")
 }
 
+// Ship returns the first SHIP timestamp
+func (tr *TrackReply) Ship() *time.Time {
+	return tr.searchDatesOrTimes("SHIP")
+}
+
 // ProcessShipReply : Process shipment reply root (`xml:"Body>ProcessShipmentReply"`)
 type ProcessShipmentReply struct {
 	Reply
