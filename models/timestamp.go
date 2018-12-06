@@ -21,10 +21,17 @@ func (ts *Timestamp) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 		return err
 	}
 
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return err
+	// Try to unmarshal timestamps as time.RFC3339, then without the timezone
+	// If both fail, just don't do anything
+	timeFormats := []string{time.RFC3339, "2006-01-02T15:04:05"}
+	for _, timeFormat := range timeFormats {
+		t, err := time.Parse(timeFormat, s)
+		if err != nil {
+			continue
+		}
+		*ts = Timestamp(t)
+		return nil
 	}
-	*ts = Timestamp(t)
+
 	return nil
 }

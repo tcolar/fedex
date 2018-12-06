@@ -1,5 +1,9 @@
 package models
 
+import (
+	"time"
+)
+
 // Structures to unmarshall the Fedex SOAP answer into
 
 // Envelope is the soap wrapper for all requests
@@ -247,6 +251,30 @@ type TrackReply struct {
 	CompletedTrackDetails []CompletedTrackDetail
 }
 
+func (tr TrackReply) searchDatesOrTimes(dateOrTimeType string) time.Time {
+	for _, completedTrackDetail := range tr.CompletedTrackDetails {
+		for _, trackDetail := range completedTrackDetail.TrackDetails {
+			for _, dateOrTime := range trackDetail.DatesOrTimes {
+				if dateOrTime.Type == dateOrTimeType {
+					return time.Time(dateOrTime.DateOrTimestamp)
+				}
+			}
+		}
+	}
+
+	return time.Time{}
+}
+
+// ActualDelivery returns the first ACTUAL_DELIVERY timestamp
+func (tr TrackReply) ActualDelivery() time.Time {
+	return tr.searchDatesOrTimes("ACTUAL_DELIVERY")
+}
+
+// EstimatedDelivery returns the first ESTIMATED_DELIVERY timestamp
+func (tr TrackReply) EstimatedDelivery() time.Time {
+	return tr.searchDatesOrTimes("ESTIMATED_DELIVERY")
+}
+
 // ProcessShipReply : Process shipment reply root (`xml:"Body>ProcessShipmentReply"`)
 type ProcessShipmentReply struct {
 	Reply
@@ -415,33 +443,101 @@ type CompletedTrackDetail struct {
 }
 
 type TrackDetail struct {
-	TrackingNumber                         string
-	TrackingNumberUniqueIdentifier         string
-	Notification                           Notification
-	StatusDetail                           StatusDetail
-	CarrierCode                            string
-	OperatingCompanyOrCarrierDescription   string
-	OtherIdentifiers                       []OtherIdentifier
-	Service                                Service
-	PackageWeight                          Weight
-	ShipmentWeight                         Weight
-	Packaging                              string
-	PackagingType                          string
-	PackageSequenceNumber                  int
-	PackageCount                           int
-	SpecialHandlings                       []SpecialHandling
-	ShipTimestamp                          Timestamp
-	ActualDeliveryTimestamp                Timestamp
+	Notification                   Notification
+	TrackingNumber                 string
+	Barcode                        StringBarcode
+	TrackingNumberUniqueIdentifier string
+	StatusDetail                   StatusDetail
+	InformationNotes               []InformationNoteDetail
+
+	// Not gonna bother with all of these fields until we need them
+	// Most of the fields in this block are not important
+	CustomerExceptionRequests            []InformationNoteDetail
+	Reconciliations                      []Reconciliation
+	ServiceCommitMessage                 string
+	DestinationServiceArea               string
+	DestinationServiceAreaDescription    string
+	CarrierCode                          string
+	OperatingCompanyType                 string
+	OperatingCompanyOrCarrierDescription string
+	CartageAgentCompanyName              string
+	ProductionLocationContactAndAddress  ContactAndAddress
+	ContentRecord                        ContentRecord
+	// ... more
+
+	Service               Service
+	PackageWeight         Weight
+	ShipmentWeight        Weight
+	Packaging             string
+	PackagingType         string
+	PhysicalPackagingType string
+	PackageSequenceNumber int
+	PackageCount          int
+	Charges               Charge
+	NickName              string
+	Notes                 string
+	Attributes            []string
+	ShipmentContents      []ContentRecord
+	PackageContents       string
+
+	TrackAdvanceNotificationDetail AdvanceNotificationDetail
+	Shipper                        Contact
+	ShipperAddress                 Address
+	OriginLocationAddress          Address
+
+	// DatesOrTimes contains estimated arrivals, departures, etc.
+	DatesOrTimes []DateOrTimestamp
+
+	Recipient                              Contact
 	DestinationAddress                     Address
 	ActualDeliveryAddress                  Address
+	SpecialHandlings                       []SpecialHandling
 	DeliveryLocationType                   string
 	DeliveryLocationDescription            string
 	DeliveryAttempts                       int
 	DeliverySignatureName                  string
 	TotalUniqueAddressCountInConsolidation int
 	NotificationEventsAvailable            string
-	RedirectToHoldEligibility              string
-	Events                                 []Event
+}
+
+type DateOrTimestamp struct {
+	Type            string
+	DateOrTimestamp Timestamp
+}
+
+type AdvanceNotificationDetail struct {
+	EstimatedTimeOfArrival Timestamp
+	Reason                 string
+	Status                 string
+	StatusDescription      string
+	StatusTime             Timestamp
+}
+
+type ContentRecord struct {
+	PartNumber       string
+	ItemNumber       string
+	ReceivedQuantity int
+	Description      string
+}
+
+type ContactAndAddress struct {
+	Contact Contact `xml:"q0:Contact"`
+	Address Address `xml:"q0:Address"`
+}
+
+type Reconciliation struct {
+	Status      string
+	Description string
+}
+
+type InformationNoteDetail struct {
+	Code        string
+	Description string
+}
+
+type StringBarcode struct {
+	Type  string
+	Value string
 }
 
 type Notification struct {
@@ -453,7 +549,7 @@ type Notification struct {
 }
 
 type StatusDetail struct {
-	CreationTime     string
+	CreationTime     Timestamp
 	Code             string
 	Description      string
 	Location         Address

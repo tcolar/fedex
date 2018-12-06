@@ -47,6 +47,17 @@ func TestTrack(t *testing.T) {
 		reply.CompletedTrackDetails[0].TrackDetails[0].CarrierCode != "FDXE" {
 		t.Fatal("output not correct")
 	}
+
+	// Check the timestamps make sense
+	if len(reply.CompletedTrackDetails[0].TrackDetails[0].DatesOrTimes) == 0 {
+		t.Fatal("should get at least one dateortime")
+	}
+	if reply.ActualDelivery().IsZero() {
+		t.Fatal("actual delivery should be set")
+	}
+	if reply.EstimatedDelivery().IsZero() {
+		t.Fatal("actual delivery should be set")
+	}
 }
 
 func TestRate(t *testing.T) {
