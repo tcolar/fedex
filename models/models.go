@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -295,6 +296,20 @@ type RateReply struct {
 	RateReplyDetails  []RateReplyDetail
 }
 
+// TotalCost returns the first TotalNetChargeWithDutiesAndTaxes in the reply
+func (rr *RateReply) TotalCost() (Charge, error) {
+	// TotalNetChargeWithDutiesAndTaxes
+	for _, rateReplyDetail := range rr.RateReplyDetails {
+		for _, ratedShipmentDetail := range rateReplyDetail.RatedShipmentDetails {
+			totalNetCharge := ratedShipmentDetail.ShipmentRateDetail.TotalNetChargeWithDutiesAndTaxes
+			if totalNetCharge.Currency != "" && totalNetCharge.Amount != "" {
+				return totalNetCharge, nil
+			}
+		}
+	}
+	return Charge{}, errors.New("no total net charge found on reply")
+}
+
 // CreatePickupReply : CreatePickup reply root (`xml:"Body>CreatePickupReply"`)
 type CreatePickupReply struct {
 	Reply
@@ -395,8 +410,12 @@ type Rating struct {
 	ActualRateType       string
 	GroupNumber          string
 	EffectiveNetDiscount Charge
-	ShipmentRateDetails  []RateDetail
-	RatedPackages        []RatedPackage
+
+	// For the shipping service, the rate details is an array, but for the rate service, it is not
+	ShipmentRateDetails []RateDetail
+	ShipmentRateDetail  RateDetail
+
+	RatedPackages []RatedPackage
 }
 
 type Charge struct {

@@ -117,6 +117,15 @@ func TestRate(t *testing.T) {
 		reply.RateReplyDetails[0].RatedShipmentDetails[1].RatedPackages[0].PackageRateDetail.NetCharge.Amount == "0.0" {
 		t.Fatal("output not correct")
 	}
+
+	charge, err := reply.TotalCost()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if charge.Currency != "USD" || charge.Amount == "0.00" {
+		t.Fatal("totalCost should be non-zero, USD")
+	}
 }
 
 func TestShipGround(t *testing.T) {
