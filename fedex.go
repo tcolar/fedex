@@ -24,15 +24,6 @@ const (
 	CarrierCodeCustomCritical = "FXCC"
 )
 
-// SmartPostCred are the credentials needed for Smart Post labels
-type SmartPostCred struct {
-	Key      string
-	Password string
-	Account  string
-	Meter    string
-	HubID    string
-}
-
 // Fedex : Utility to retrieve data from Fedex API
 // Bypassing painful proper SOAP implementation and just crafting minimal XML messages to get the data we need.
 // Fedex WSDL docs here: http://images.fedex.com/us/developer/product/WebServices/MyWebHelp/DeveloperGuide2012.pdf
@@ -41,8 +32,7 @@ type Fedex struct {
 	Password string
 	Account  string
 	Meter    string
-
-	SmartPostCreds map[string]SmartPostCred
+	HubID    string // for SmartPost
 
 	FedexURL string
 }

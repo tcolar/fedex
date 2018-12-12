@@ -1,7 +1,6 @@
 package fedex
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/happyreturns/fedex/models"
@@ -13,16 +12,9 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 	var dimensions models.Dimensions
 	var smartPostDetail *models.SmartPostDetail
 	var specialServicesRequested *models.SpecialServicesRequested
-	var account string
-	var key string
-	var password string
-	var meter string
 
 	switch shipmentType {
 	case "SMART_POST":
-		if _, ok := f.SmartPostCreds[smartPostKey]; !ok {
-			return models.Envelope{}, fmt.Errorf("invalid smart post key: %s", smartPostKey)
-		}
 		serviceType = "SMART_POST"
 		weight = models.Weight{
 			Units: "LB",
@@ -35,15 +27,10 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			Units:  "IN",
 		}
 
-		account = f.SmartPostCreds[smartPostKey].Account
-		key = f.SmartPostCreds[smartPostKey].Key
-		password = f.SmartPostCreds[smartPostKey].Password
-		meter = f.SmartPostCreds[smartPostKey].Meter
-
 		smartPostDetail = &models.SmartPostDetail{
 			Indicia:              "PARCEL_RETURN",
 			AncillaryEndorsement: "ADDRESS_CORRECTION",
-			HubID:                f.SmartPostCreds[smartPostKey].HubID,
+			HubID:                f.HubID,
 		}
 		specialServicesRequested = &models.SpecialServicesRequested{
 			SpecialServiceTypes: []string{"RETURN_SHIPMENT"},
@@ -63,24 +50,19 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			Height: 13,
 			Units:  "IN",
 		}
-
-		account = f.Account
-		key = f.Key
-		password = f.Password
-		meter = f.Meter
 	}
 
 	req := models.ProcessShipmentRequest{
 		Request: models.Request{
 			WebAuthenticationDetail: models.WebAuthenticationDetail{
 				UserCredential: models.UserCredential{
-					Key:      key,
-					Password: password,
+					Key:      f.Key,
+					Password: f.Password,
 				},
 			},
 			ClientDetail: models.ClientDetail{
-				AccountNumber: account,
-				MeterNumber:   meter,
+				AccountNumber: f.Account,
+				MeterNumber:   f.Meter,
 			},
 			Version: models.Version{
 				ServiceID: "ship",
@@ -93,12 +75,12 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			ServiceType:   serviceType,
 			PackagingType: "YOUR_PACKAGING",
 			Shipper: models.Shipper{
-				AccountNumber: account,
+				AccountNumber: f.Account,
 				Address:       fromLocation,
 				Contact:       fromContact,
 			},
 			Recipient: models.Shipper{
-				AccountNumber: account,
+				AccountNumber: f.Account,
 				Address:       toLocation,
 				Contact:       toContact,
 			},
@@ -106,7 +88,7 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 				PaymentType: "SENDER",
 				Payor: models.Payor{
 					ResponsibleParty: models.ResponsibleParty{
-						AccountNumber: account,
+						AccountNumber: f.Account,
 					},
 				},
 			},

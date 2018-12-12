@@ -15,10 +15,13 @@ var f Fedex = Fedex{
 	// Password: "",
 	// Account:  "",
 	// Meter:    "",
+	// HubID:    "", // for SmartPost
 }
 
 func TestTrack(t *testing.T) {
-	f.FedexURL = FedexAPITestURL
+	if f.HubID != "" || f.FedexURL != FedexAPITestURL {
+		t.SkipNow()
+	}
 	reply, err := f.TrackByNumber(CarrierCodeExpress, "123456789012")
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +64,9 @@ func TestTrack(t *testing.T) {
 }
 
 func TestRate(t *testing.T) {
-	f.FedexURL = FedexAPITestURL
+	if f.HubID != "" {
+		t.SkipNow()
+	}
 	reply, err := f.Rate(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
@@ -129,7 +134,9 @@ func TestRate(t *testing.T) {
 }
 
 func TestShipGround(t *testing.T) {
-	f.FedexURL = FedexAPITestURL
+	if f.HubID != "" {
+		t.SkipNow()
+	}
 	reply, err := f.ShipGround(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
@@ -188,16 +195,14 @@ func TestShipGround(t *testing.T) {
 		reply.CompletedShipmentDetail.OperationalDetail.PackagingCode != "01" ||
 		reply.CompletedShipmentDetail.ShipmentRating.ActualRateType != "PAYOR_ACCOUNT_PACKAGE" ||
 		reply.CompletedShipmentDetail.ShipmentRating.EffectiveNetDiscount.Currency != "USD" ||
-		reply.CompletedShipmentDetail.ShipmentRating.EffectiveNetDiscount.Amount != "0.0" ||
 		len(reply.CompletedShipmentDetail.ShipmentRating.ShipmentRateDetails) != 2 ||
-		// skip most ShipmentRateDetails fields
+		// // skip most ShipmentRateDetails fields
 		reply.CompletedShipmentDetail.ShipmentRating.ShipmentRateDetails[0].RateType != "PAYOR_ACCOUNT_PACKAGE" ||
 		reply.CompletedShipmentDetail.ShipmentRating.ShipmentRateDetails[1].RateType != "PAYOR_LIST_PACKAGE" ||
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "FEDEX" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
-
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
 		t.Fatal("output not correct")
@@ -206,7 +211,7 @@ func TestShipGround(t *testing.T) {
 
 func TestShipSmartPost(t *testing.T) {
 	// Fill in prod creds to run this test, as this test only works in prod
-	if len(f.SmartPostCreds) == 0 {
+	if f.HubID == "" {
 		t.SkipNow()
 	}
 	f.FedexURL = FedexAPIURL
@@ -289,7 +294,6 @@ func TestShipSmartPost(t *testing.T) {
 func TestCreatePickup(t *testing.T) {
 	// Fill in prod creds to run this test, as this test only works in prod
 	t.SkipNow()
-	f.FedexURL = FedexAPIURL
 
 	reply, err := f.CreatePickup(models.PickupLocation{
 		Address: models.Address{
