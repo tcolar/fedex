@@ -6,7 +6,7 @@ import (
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation models.Address, fromContact, toContact models.Contact, smartPostKey string) (models.Envelope, error) {
+func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation models.Address, fromContact, toContact models.Contact) (models.Envelope, error) {
 	var serviceType string
 	var weight models.Weight
 	var dimensions models.Dimensions

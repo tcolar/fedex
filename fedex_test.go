@@ -64,9 +64,6 @@ func TestTrack(t *testing.T) {
 }
 
 func TestRate(t *testing.T) {
-	if f.HubID != "" {
-		t.SkipNow()
-	}
 	reply, err := f.Rate(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
@@ -210,84 +207,77 @@ func TestShipGround(t *testing.T) {
 }
 
 func TestShipSmartPost(t *testing.T) {
-	// Fill in prod creds to run this test, as this test only works in prod
 	if f.HubID == "" {
 		t.SkipNow()
 	}
-	f.FedexURL = FedexAPIURL
 
-	smartPostKeys := []string{"hub-la", "hub-blandon"}
+	reply, err := f.ShipSmartPost(
+		models.Address{
+			StreetLines:         []string{"1517 Lincoln Blvd"},
+			City:                "Santa Monica",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "90401",
+			CountryCode:         "US",
+		},
+		models.Address{},
+		models.Contact{
+			PersonName:   "Jenny",
+			PhoneNumber:  "213 867 5309",
+			EmailAddress: "jenny@jenny.com",
+		}, models.Contact{
+			CompanyName:  "Some Company",
+			PhoneNumber:  "214 867 5309",
+			EmailAddress: "somecompany@somecompany.com",
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	for _, smartPostKey := range smartPostKeys {
-		reply, err := f.ShipSmartPost(
-			models.Address{
-				StreetLines:         []string{"1517 Lincoln Blvd"},
-				City:                "Santa Monica",
-				StateOrProvinceCode: "CA",
-				PostalCode:          "90401",
-				CountryCode:         "US",
-			},
-			models.Address{},
-			models.Contact{
-				PersonName:   "Jenny",
-				PhoneNumber:  "213 867 5309",
-				EmailAddress: "jenny@jenny.com",
-			}, models.Contact{
-				CompanyName:  "Some Company",
-				PhoneNumber:  "214 867 5309",
-				EmailAddress: "somecompany@somecompany.com",
-			},
-			smartPostKey,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if reply.Failed() {
+		fmt.Println(reply)
+		t.Fatal("reply should not have failed")
+	}
+	if reply.HighestSeverity != "SUCCESS" ||
+		// Basic validation
+		len(reply.Notifications) != 1 ||
+		reply.Notifications[0].Source != "ship" ||
+		reply.Notifications[0].Code != "0000" ||
+		reply.Notifications[0].Message != "Success" ||
+		reply.Notifications[0].LocalizedMessage != "Success" ||
+		reply.Version.ServiceID != "ship" ||
+		reply.Version.Major != 23 ||
+		reply.Version.Intermediate != 0 ||
+		reply.Version.Minor != 0 ||
+		reply.JobID == "" ||
+		reply.CompletedShipmentDetail.UsDomestic != "true" ||
+		reply.CompletedShipmentDetail.CarrierCode != "FXSP" ||
+		reply.CompletedShipmentDetail.MasterTrackingId.TrackingIdType != "USPS" ||
+		reply.CompletedShipmentDetail.MasterTrackingId.TrackingNumber == "" ||
+		reply.CompletedShipmentDetail.ServiceTypeDescription != "SMART POST" ||
+		reply.CompletedShipmentDetail.ServiceDescription.ServiceType != "SMART_POST" ||
+		reply.CompletedShipmentDetail.PackagingDescription != "YOUR_PACKAGING" ||
+		reply.CompletedShipmentDetail.OperationalDetail.TransitTime != "TWO_DAYS" ||
+		reply.CompletedShipmentDetail.OperationalDetail.IneligibleForMoneyBackGuarantee != "false" ||
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "USPS" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
+		t.Fatal("output not correct")
+	}
 
-		if reply.Failed() {
-			fmt.Println(reply)
-			t.Fatal("reply should not have failed")
-		}
-		if reply.HighestSeverity != "SUCCESS" ||
-			// Basic validation
-			len(reply.Notifications) != 1 ||
-			reply.Notifications[0].Source != "ship" ||
-			reply.Notifications[0].Code != "0000" ||
-			reply.Notifications[0].Message != "Success" ||
-			reply.Notifications[0].LocalizedMessage != "Success" ||
-			reply.Version.ServiceID != "ship" ||
-			reply.Version.Major != 23 ||
-			reply.Version.Intermediate != 0 ||
-			reply.Version.Minor != 0 ||
-			reply.JobID == "" ||
-			reply.CompletedShipmentDetail.UsDomestic != "true" ||
-			reply.CompletedShipmentDetail.CarrierCode != "FXSP" ||
-			reply.CompletedShipmentDetail.MasterTrackingId.TrackingIdType != "USPS" ||
-			reply.CompletedShipmentDetail.MasterTrackingId.TrackingNumber == "" ||
-			reply.CompletedShipmentDetail.ServiceTypeDescription != "SMART POST" ||
-			reply.CompletedShipmentDetail.ServiceDescription.ServiceType != "SMART_POST" ||
-			reply.CompletedShipmentDetail.PackagingDescription != "YOUR_PACKAGING" ||
-			reply.CompletedShipmentDetail.OperationalDetail.TransitTime != "TWO_DAYS" ||
-			reply.CompletedShipmentDetail.OperationalDetail.IneligibleForMoneyBackGuarantee != "false" ||
-			len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
-			reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "USPS" ||
-			reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
-			reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
-			len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
-			reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
-			t.Fatal("output not correct")
-		}
+	// Decode pdf bytes from base64 data
+	pdfBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		// Decode pdf bytes from base64 data
-		pdfBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		// Write label as pdf, and manually check it
-		err = ioutil.WriteFile(fmt.Sprintf("output-%s.pdf", smartPostKey), pdfBytes, 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+	// Write label as pdf, and manually check it
+	err = ioutil.WriteFile("output-smart-post.pdf", pdfBytes, 0644)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
