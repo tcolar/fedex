@@ -24,6 +24,11 @@ func TestTrack(t *testing.T) {
 		t.SkipNow()
 	}
 
+	_, err := f.TrackByNumber(CarrierCodeExpress, "dkfjdkfj")
+	if err == nil || !strings.HasPrefix(err.Error(), "make track request and unmarshal: response error: track detail error:") {
+		t.Fatal("error did not match", err)
+	}
+
 	reply, err := f.TrackByNumber(CarrierCodeExpress, "123456789012")
 	if err != nil {
 		t.Fatal(err)

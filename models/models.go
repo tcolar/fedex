@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+const notificationSeverityError = "ERROR"
+const notificationSeveritySuccess = "SUCCESS"
+
 // Structures to unmarshall the Fedex SOAP answer into
 
 // Envelope is the soap wrapper for all requests
@@ -25,7 +28,25 @@ type TrackResponseEnvelope struct {
 }
 
 func (t *TrackResponseEnvelope) Error() error {
-	return t.Reply.Error()
+	// TrackResponses are odd in that for invalid tracking numbers, the Reply
+	// doesn't say it errored, even though the Reply.CompletedTrackDetails does
+
+	// Error if Reply has error
+	err := t.Reply.Error()
+	if err != nil {
+		return fmt.Errorf("track reply error: %s", err)
+	}
+
+	// Error if CompletedTrackDetails has error
+	for _, completedTrackDetail := range t.Reply.CompletedTrackDetails {
+		for _, trackDetail := range completedTrackDetail.TrackDetails {
+			if trackDetail.Notification.Severity == notificationSeverityError {
+				return fmt.Errorf("track detail error: %s", trackDetail.Notification.Message)
+			}
+		}
+	}
+
+	return nil
 }
 
 type ShipResponseEnvelope struct {
@@ -264,7 +285,7 @@ type Reply struct {
 }
 
 func (r Reply) Error() error {
-	if r.HighestSeverity == "SUCCESS" {
+	if r.HighestSeverity == notificationSeveritySuccess {
 		return nil
 	}
 
