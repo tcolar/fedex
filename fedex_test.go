@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/happyreturns/fedex/models"
@@ -22,11 +23,12 @@ func TestTrack(t *testing.T) {
 	if f.HubID != "" || f.FedexURL != FedexAPITestURL {
 		t.SkipNow()
 	}
+
 	reply, err := f.TrackByNumber(CarrierCodeExpress, "123456789012")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reply.Failed() {
+	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 	if reply.HighestSeverity != "SUCCESS" ||
@@ -64,6 +66,12 @@ func TestTrack(t *testing.T) {
 }
 
 func TestRate(t *testing.T) {
+
+	_, err := f.Rate(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	if err == nil || !strings.HasPrefix(err.Error(), "make rate request and unmarshal: response error: reply got error:") {
+		t.Fatal("error did not match", err)
+	}
+
 	reply, err := f.Rate(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
@@ -89,7 +97,7 @@ func TestRate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reply.Failed() {
+	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 	if reply.HighestSeverity != "SUCCESS" ||
@@ -134,6 +142,12 @@ func TestShipGround(t *testing.T) {
 	if f.HubID != "" {
 		t.SkipNow()
 	}
+
+	_, err := f.ShipGround(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	if err == nil || !strings.HasPrefix(err.Error(), "make ship ground request and unmarshal: response error: reply got error:") {
+		t.Fatal("error did not match", err)
+	}
+
 	reply, err := f.ShipGround(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
@@ -159,7 +173,7 @@ func TestShipGround(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reply.Failed() {
+	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 	if reply.HighestSeverity != "SUCCESS" ||
@@ -211,6 +225,11 @@ func TestShipSmartPost(t *testing.T) {
 		t.SkipNow()
 	}
 
+	_, err := f.ShipSmartPost(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	if err == nil || !strings.HasPrefix(err.Error(), "make ship smart post request and unmarshal: response error: reply got error:") {
+		t.Fatal("error did not match", err)
+	}
+
 	reply, err := f.ShipSmartPost(
 		models.Address{
 			StreetLines:         []string{"1517 Lincoln Blvd"},
@@ -234,7 +253,7 @@ func TestShipSmartPost(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reply.Failed() {
+	if reply.Error() != nil {
 		fmt.Println(reply)
 		t.Fatal("reply should not have failed")
 	}
@@ -310,7 +329,7 @@ func TestCreatePickup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reply.Failed() {
+	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 

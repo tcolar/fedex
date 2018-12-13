@@ -55,8 +55,8 @@ func trackByPo(fedex Fedex, po string, postalCode string, countryCode string) {
 func Dump(reply models.TrackReply) {
 	log.Print(reply)
 	// Dummy example of using the data
-	log.Printf("Successs : %t", !reply.Failed())
-	if !reply.Failed() {
+	log.Printf("Successs : %t", reply.Error() != nil)
+	if reply.Error() != nil {
 		tracking := reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumber
 		log.Printf("Tracking Number: %s", tracking)
 		log.Print(reply.CompletedTrackDetails[0].TrackDetails[0].ActualDeliveryAddress)

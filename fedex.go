@@ -95,7 +95,7 @@ func (f Fedex) TrackByPo(carrierCode string, po string, postalCode string,
 }
 
 func (f Fedex) makeRequestAndUnmarshal(url string, request models.Envelope,
-	response interface{}) error {
+	response models.Response) error {
 	// Create request body
 	reqXML, err := xml.Marshal(request)
 	if err != nil {
@@ -113,6 +113,13 @@ func (f Fedex) makeRequestAndUnmarshal(url string, request models.Envelope,
 	if err != nil {
 		return fmt.Errorf("parse xml: %s", err)
 	}
+
+	// Check if reply failed (FedEx responds with 200 even though it failed)
+	err = response.Error()
+	if err != nil {
+		return fmt.Errorf("response error: %s", err)
+	}
+
 	return nil
 }
 

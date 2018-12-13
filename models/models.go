@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -15,20 +16,40 @@ type Envelope struct {
 	Namespace string      `xml:"xmlns:q0,attr"`
 }
 
+type Response interface {
+	Error() error
+}
+
 type TrackResponseEnvelope struct {
 	Reply TrackReply `xml:"Body>TrackReply"`
+}
+
+func (t *TrackResponseEnvelope) Error() error {
+	return t.Reply.Error()
 }
 
 type ShipResponseEnvelope struct {
 	Reply ProcessShipmentReply `xml:"Body>ProcessShipmentReply"`
 }
 
+func (s *ShipResponseEnvelope) Error() error {
+	return s.Reply.Error()
+}
+
 type RateResponseEnvelope struct {
 	Reply RateReply `xml:"Body>RateReply"`
 }
 
+func (r *RateResponseEnvelope) Error() error {
+	return r.Reply.Error()
+}
+
 type CreatePickupResponseEnvelope struct {
 	Reply CreatePickupReply `xml:"Body>CreatePickupReply"`
+}
+
+func (c *CreatePickupResponseEnvelope) Error() error {
+	return c.Reply.Error()
 }
 
 // Request has just the default auth fields on all requests
@@ -242,8 +263,18 @@ type Reply struct {
 	JobID           string `xml:"JobId"`
 }
 
-func (r Reply) Failed() bool {
-	return r.HighestSeverity != "SUCCESS"
+func (r Reply) Error() error {
+	if r.HighestSeverity == "SUCCESS" {
+		return nil
+	}
+
+	for _, notification := range r.Notifications {
+		if notification.Severity == r.HighestSeverity {
+			return fmt.Errorf("reply got error: %s", notification.Message)
+		}
+	}
+	return fmt.Errorf("reply got status: %s", r.HighestSeverity)
+
 }
 
 // TrackReply : Track reply root (`xml:"Body>TrackReply"`)
