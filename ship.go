@@ -96,7 +96,7 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			SpecialServicesRequested: specialServicesRequested,
 			LabelSpecification: models.LabelSpecification{
 				LabelFormatType: "COMMON2D",
-				ImageType:       "PDF",
+				ImageType:       "PNG",
 			},
 			RateRequestTypes: "LIST",
 			PackageCount:     1,

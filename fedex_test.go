@@ -53,7 +53,7 @@ func TestTrack(t *testing.T) {
 		len(reply.CompletedTrackDetails[0].TrackDetails) < 1 ||
 		reply.CompletedTrackDetails[0].TrackDetails[0].OperatingCompanyOrCarrierDescription != "FedEx Express" ||
 		reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumber != "123456789012" ||
-		reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumberUniqueIdentifier != "2458115001~123456789012~FX" ||
+		reply.CompletedTrackDetails[0].TrackDetails[0].TrackingNumberUniqueIdentifier != "2458162000~123456789012~FX" ||
 		reply.CompletedTrackDetails[0].TrackDetails[0].CarrierCode != "FDXE" {
 		t.Fatal("output not correct")
 	}
@@ -218,10 +218,22 @@ func TestShipGround(t *testing.T) {
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "FEDEX" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PNG" ||
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
 		t.Fatal("output not correct")
+	}
+
+	// Decode png bytes from base64 data
+	pngBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Write label as png, and manually check it
+	err = ioutil.WriteFile(fmt.Sprintf("output-ground-%s.png", f.Key), pngBytes, 0644)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -286,20 +298,20 @@ func TestShipSmartPost(t *testing.T) {
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "USPS" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PNG" ||
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
 		t.Fatal("output not correct")
 	}
 
-	// Decode pdf bytes from base64 data
-	pdfBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
+	// Decode png bytes from base64 data
+	pngBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Write label as pdf, and manually check it
-	err = ioutil.WriteFile("output-smart-post.pdf", pdfBytes, 0644)
+	// Write label as png, and manually check it
+	err = ioutil.WriteFile(fmt.Sprintf("output-smart-post-%s.png", f.Key), pngBytes, 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
