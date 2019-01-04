@@ -220,7 +220,7 @@ func TestShipGround(t *testing.T) {
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image) == 0 {
 		t.Fatal("output not correct")
 	}
 }
@@ -288,12 +288,12 @@ func TestShipSmartPost(t *testing.T) {
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
 		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PDF" ||
 		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image == "" {
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image) == 0 {
 		t.Fatal("output not correct")
 	}
 
 	// Decode pdf bytes from base64 data
-	pdfBytes, err := base64.StdEncoding.DecodeString(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image)
+	pdfBytes, err := base64.StdEncoding.DecodeString(string(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -398,7 +398,7 @@ type CompletedShipmentDetail struct {
 
 type Part struct {
 	DocumentPartSequenceNumber string
-	Image                      string
+	Image                      []byte
 }
 
 type Label struct {
