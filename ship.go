@@ -1,17 +1,52 @@
 package fedex
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation models.Address, fromContact, toContact models.Contact) (models.Envelope, error) {
+func (f Fedex) shipmentEnvelope(shipmentType string, shipment *models.Shipment) (models.Envelope, error) {
 	var serviceType string
 	var weight models.Weight
 	var dimensions models.Dimensions
 	var smartPostDetail *models.SmartPostDetail
 	var specialServicesRequested *models.SpecialServicesRequested
+	var eventNotificationDetail *models.EventNotificationDetail
+
+	if shipment == nil {
+		return models.Envelope{}, errors.New("empty shipment")
+	}
+
+	eventNotificationDetail = &models.EventNotificationDetail{
+		AggregationType: "PER_SHIPMENT",
+		PersonalMessage: fmt.Sprintf("shipment type: %s", shipmentType),
+		EventNotifications: []models.EventNotification{{
+			Role: "SHIPPER",
+			Events: []string{
+				"ON_DELIVERY",
+				"ON_ESTIMATED_DELIVERY",
+				"ON_EXCEPTION",
+				"ON_SHIPMENT",
+				"ON_TENDER",
+			},
+			NotificationDetail: models.NotificationDetail{
+				NotificationType: "EMAIL",
+				EmailDetail: models.EmailDetail{
+					EmailAddress: shipment.NotificationEmail,
+					Name:         "TEST NAME",
+				},
+				Localization: models.Localization{
+					LanguageCode: "en",
+				},
+			},
+			FormatSpecification: models.FormatSpecification{
+				Type: "HTML",
+			},
+		}},
+	}
 
 	switch shipmentType {
 	case "SMART_POST":
@@ -34,9 +69,13 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 		}
 		specialServicesRequested = &models.SpecialServicesRequested{
 			SpecialServiceTypes: []string{"RETURN_SHIPMENT"},
-			ReturnShipmentDetail: models.ReturnShipmentDetail{
+			ReturnShipmentDetail: &models.ReturnShipmentDetail{
 				ReturnType: "PRINT_RETURN_LABEL",
 			},
+		}
+
+		if shipment.NotificationEmail != "" {
+			specialServicesRequested.EventNotificationDetail = eventNotificationDetail
 		}
 	default:
 		serviceType = "FEDEX_GROUND"
@@ -49,6 +88,12 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			Width:  13,
 			Height: 13,
 			Units:  "IN",
+		}
+		if shipment.NotificationEmail != "" {
+			specialServicesRequested = &models.SpecialServicesRequested{
+				SpecialServiceTypes:     []string{"EVENT_NOTIFICATION"},
+				EventNotificationDetail: eventNotificationDetail,
+			}
 		}
 	}
 
@@ -76,13 +121,13 @@ func (f Fedex) shipmentEnvelope(shipmentType string, fromLocation, toLocation mo
 			PackagingType: "YOUR_PACKAGING",
 			Shipper: models.Shipper{
 				AccountNumber: f.Account,
-				Address:       fromLocation,
-				Contact:       fromContact,
+				Address:       shipment.FromAddress,
+				Contact:       shipment.FromContact,
 			},
 			Recipient: models.Shipper{
 				AccountNumber: f.Account,
-				Address:       toLocation,
-				Contact:       toContact,
+				Address:       shipment.ToAddress,
+				Contact:       shipment.ToContact,
 			},
 			ShippingChargesPayment: models.Payment{
 				PaymentType: "SENDER",

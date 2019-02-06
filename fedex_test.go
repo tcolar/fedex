@@ -148,32 +148,44 @@ func TestShipGround(t *testing.T) {
 		t.SkipNow()
 	}
 
-	_, err := f.ShipGround(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	_, err := f.ShipGround(nil)
+	if err == nil || !strings.HasPrefix(err.Error(), "create shipment request: empty shipment") {
+		t.Fatal("error did not match", err)
+	}
+
+	_, err = f.ShipGround(&models.Shipment{})
 	if err == nil || !strings.HasPrefix(err.Error(), "make ship ground request and unmarshal: response error: reply got error:") {
 		t.Fatal("error did not match", err)
 	}
 
-	reply, err := f.ShipGround(models.Address{
-		StreetLines:         []string{"1517 Lincoln Blvd"},
-		City:                "Santa Monica",
-		StateOrProvinceCode: "CA",
-		PostalCode:          "90401",
-		CountryCode:         "US",
-	}, models.Address{
-		StreetLines:         []string{"1106 Broadway"},
-		City:                "Santa Monica",
-		StateOrProvinceCode: "CA",
-		PostalCode:          "90401",
-		CountryCode:         "US",
-	}, models.Contact{
-		PersonName:   "Jenny",
-		PhoneNumber:  "213 867 5309",
-		EmailAddress: "jenny@jenny.com",
-	}, models.Contact{
-		CompanyName:  "Some Company",
-		PhoneNumber:  "214 867 5309",
-		EmailAddress: "somecompany@somecompany.com",
-	})
+	exampleShipment := &models.Shipment{
+		FromAddress: models.Address{
+			StreetLines:         []string{"1517 Lincoln Blvd"},
+			City:                "Santa Monica",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "90401",
+			CountryCode:         "US",
+		},
+		ToAddress: models.Address{
+			StreetLines:         []string{"1106 Broadway"},
+			City:                "Santa Monica",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "90401",
+			CountryCode:         "US",
+		},
+		FromContact: models.Contact{
+			PersonName:   "Jenny",
+			PhoneNumber:  "213 867 5309",
+			EmailAddress: "jenny@jenny.com",
+		},
+		ToContact: models.Contact{
+			CompanyName:  "Some Company",
+			PhoneNumber:  "214 867 5309",
+			EmailAddress: "somecompany@somecompany.com",
+		},
+		NotificationEmail: "dev-notifications@happyreturns.com",
+	}
+	reply, err := f.ShipGround(exampleShipment)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,6 +247,18 @@ func TestShipGround(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// it also works with no email
+	exampleShipment.NotificationEmail = ""
+	reply, err = f.ShipGround(exampleShipment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if reply.Error() != nil {
+		fmt.Println(reply)
+		t.Fatal("reply should not have failed")
+	}
 }
 
 func TestShipSmartPost(t *testing.T) {
@@ -242,30 +266,38 @@ func TestShipSmartPost(t *testing.T) {
 		t.SkipNow()
 	}
 
-	_, err := f.ShipSmartPost(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	_, err := f.ShipSmartPost(nil)
+	if err == nil || !strings.HasPrefix(err.Error(), "create shipment request: empty shipment") {
+		t.Fatal("error did not match", err)
+	}
+
+	_, err = f.ShipSmartPost(&models.Shipment{})
 	if err == nil || !strings.HasPrefix(err.Error(), "make ship smart post request and unmarshal: response error: reply got error:") {
 		t.Fatal("error did not match", err)
 	}
 
-	reply, err := f.ShipSmartPost(
-		models.Address{
+	exampleShipment := &models.Shipment{
+		FromAddress: models.Address{
 			StreetLines:         []string{"1517 Lincoln Blvd"},
 			City:                "Santa Monica",
 			StateOrProvinceCode: "CA",
 			PostalCode:          "90401",
 			CountryCode:         "US",
 		},
-		models.Address{},
-		models.Contact{
+		ToAddress: models.Address{},
+		FromContact: models.Contact{
 			PersonName:   "Jenny",
 			PhoneNumber:  "213 867 5309",
 			EmailAddress: "jenny@jenny.com",
-		}, models.Contact{
+		},
+		ToContact: models.Contact{
 			CompanyName:  "Some Company",
 			PhoneNumber:  "214 867 5309",
 			EmailAddress: "somecompany@somecompany.com",
 		},
-	)
+		NotificationEmail: "dev-notifications@happyreturns.com",
+	}
+	reply, err := f.ShipSmartPost(exampleShipment)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,11 +347,26 @@ func TestShipSmartPost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// it also works with no email
+	exampleShipment.NotificationEmail = ""
+	reply, err = f.ShipSmartPost(exampleShipment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if reply.Error() != nil {
+		fmt.Println(reply)
+		t.Fatal("reply should not have failed")
+	}
 }
 
 func TestCreatePickup(t *testing.T) {
-	// Fill in prod creds to run this test, as this test only works in prod
-	t.SkipNow()
+	t.SkipNow() // TODO re-test once we start using this. Saw failures "Ready Time after Cutoff Time"
+	if f.HubID != "" || f.FedexURL != FedexAPIURL {
+		// Test only works for prod, not smartpost
+		t.SkipNow()
+	}
 
 	reply, err := f.CreatePickup(models.PickupLocation{
 		Address: models.Address{

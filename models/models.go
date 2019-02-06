@@ -9,7 +9,14 @@ import (
 const notificationSeverityError = "ERROR"
 const notificationSeveritySuccess = "SUCCESS"
 
-// Structures to unmarshall the Fedex SOAP answer into
+// Shipment is convenience struct that has fields for creating a shipment (not part of FedEx API)
+type Shipment struct {
+	FromAddress       Address
+	ToAddress         Address
+	FromContact       Contact
+	ToContact         Contact
+	NotificationEmail string
+}
 
 // Envelope is the soap wrapper for all requests
 type Envelope struct {
@@ -201,8 +208,44 @@ type RequestedShipment struct {
 }
 
 type SpecialServicesRequested struct {
-	SpecialServiceTypes  []string             `xml:"q0:SpecialServiceTypes"`
-	ReturnShipmentDetail ReturnShipmentDetail `xml:"q0:ReturnShipmentDetail"`
+	SpecialServiceTypes     []string                 `xml:"q0:SpecialServiceTypes,omitempty"`
+	EventNotificationDetail *EventNotificationDetail `xml:"q0:EventNotificationDetail,omitempty"`
+	ReturnShipmentDetail    *ReturnShipmentDetail    `xml:"q0:ReturnShipmentDetail,omitempty"`
+}
+
+type EventNotificationDetail struct {
+	AggregationType    string              `xml:"q0:AggregationType"`
+	PersonalMessage    string              `xml:"q0:PersonalMessage"`
+	EventNotifications []EventNotification `xml:"q0:EventNotifications"`
+}
+
+type EventNotification struct {
+	Role                string              `xml:"q0:Role"`
+	Events              []string            `xml:"q0:Events"`
+	NotificationDetail  NotificationDetail  `xml:"q0:NotificationDetail"`
+	FormatSpecification FormatSpecification `xml:"q0:FormatSpecification"`
+}
+
+type NotificationDetail struct {
+	NotificationType string       `xml:"q0:NotificationType"`
+	EmailDetail      EmailDetail  `xml:"q0:EmailDetail"`
+	Localization     Localization `xml:"q0:Localization"`
+}
+
+type Localization struct {
+	LanguageCode string `xml:"q0:LanguageCode"`
+}
+
+type EmailDetail struct {
+	EmailAddress string `xml:"q0:EmailAddress"`
+	Name         string `xml:"q0:Name"`
+}
+
+type FormatSpecification struct {
+	Type string `xml:"q0:Type"`
+}
+
+type NotificationFormatType struct {
 }
 
 type ReturnShipmentDetail struct {

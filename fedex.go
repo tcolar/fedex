@@ -136,10 +136,9 @@ func (f Fedex) TrackByNumber(carrierCode string, trackingNo string) (*models.Tra
 }
 
 // ShipGround : Creates a ground shipment
-func (f Fedex) ShipGround(fromAddress models.Address, toAddress models.Address,
-	fromContact models.Contact, toContact models.Contact) (*models.ProcessShipmentReply, error) {
+func (f Fedex) ShipGround(shipment *models.Shipment) (*models.ProcessShipmentReply, error) {
 
-	request, err := f.shipmentEnvelope("FEDEX_GROUND", fromAddress, toAddress, fromContact, toContact)
+	request, err := f.shipmentEnvelope("FEDEX_GROUND", shipment)
 	if err != nil {
 		return nil, fmt.Errorf("create shipment request: %s", err)
 	}
@@ -153,10 +152,9 @@ func (f Fedex) ShipGround(fromAddress models.Address, toAddress models.Address,
 }
 
 // ShipSmartPost : Creates a Smart Post return shipment
-func (f Fedex) ShipSmartPost(fromAddress models.Address, toAddress models.Address,
-	fromContact models.Contact, toContact models.Contact) (*models.ProcessShipmentReply, error) {
+func (f Fedex) ShipSmartPost(shipment *models.Shipment) (*models.ProcessShipmentReply, error) {
 
-	request, err := f.shipmentEnvelope("SMART_POST", fromAddress, toAddress, fromContact, toContact)
+	request, err := f.shipmentEnvelope("SMART_POST", shipment)
 	if err != nil {
 		return nil, fmt.Errorf("create shipment request: %s", err)
 	}
