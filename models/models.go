@@ -377,6 +377,16 @@ func (tr *TrackReply) Ship() *time.Time {
 	return tr.searchDatesOrTimes("SHIP")
 }
 
+func (tr *TrackReply) Events() []Event {
+	events := []Event{}
+	for _, completedTrackDetail := range tr.CompletedTrackDetails {
+		for _, trackDetail := range completedTrackDetail.TrackDetails {
+			events = append(events, trackDetail.Events...)
+		}
+	}
+	return events
+}
+
 // ProcessShipReply : Process shipment reply root (`xml:"Body>ProcessShipmentReply"`)
 type ProcessShipmentReply struct {
 	Reply
@@ -618,6 +628,7 @@ type TrackDetail struct {
 	DeliverySignatureName                  string
 	TotalUniqueAddressCountInConsolidation int
 	NotificationEventsAvailable            string
+	Events                                 []Event
 }
 
 type DateOrTimestamp struct {
@@ -713,7 +724,7 @@ type SpecialHandling struct {
 }
 
 type Event struct {
-	Timestamp                  string
+	Timestamp                  time.Time
 	EventType                  string
 	EventDescription           string
 	StatusExceptionCode        string
