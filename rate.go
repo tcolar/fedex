@@ -6,7 +6,7 @@ import (
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) rateSOAPRequest(fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
+func (f Fedex) rateRequest(fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
 	return models.Envelope{
 		Soapenv:   "http://schemas.xmlsoap.org/soap/envelope/",
 		Namespace: "http://fedex.com/ws/rate/v24",

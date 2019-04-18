@@ -2,42 +2,63 @@ package fedex
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/happyreturns/fedex/models"
 )
 
-var f Fedex = Fedex{
-	// TODO fill in your creds
-	// Key:      "",
-	// Password: "",
-	// Account:  "",
-	// Meter:    "",
-	// HubID:    "", // for SmartPost
+var (
+	testFedex             Fedex
+	prodFedex             Fedex
+	laSmartPostFedex      Fedex
+	blandonSmartPostFedex Fedex
+)
+
+func TestMain(m *testing.M) {
+	credData, err := ioutil.ReadFile("creds.json")
+	if err != nil {
+		panic(err)
+	}
+
+	creds := map[string]Fedex{}
+	if err := json.Unmarshal(credData, &creds); err != nil {
+		panic(err)
+	}
+
+	testFedex = creds["test"]
+	prodFedex = creds["prod"]
+	laSmartPostFedex = creds["laSmartPost"]
+	blandonSmartPostFedex = creds["blandonSmartPost"]
+
+	os.Exit(m.Run())
 }
 
 func TestTrack(t *testing.T) {
-	if f.HubID != "" || f.FedexURL != FedexAPITestURL {
-		t.SkipNow()
-	}
+	var (
+		reply *models.TrackReply
+		err   error
+	)
 
-	_, err := f.TrackByNumber(CarrierCodeExpress, "dkfjdkfj")
-	if err == nil || !strings.HasPrefix(err.Error(), "make track request and unmarshal: response error: track detail error:") {
-		t.Fatal("error did not match", err)
-	}
+	// Error case - invalid tracking
+	_, err = testFedex.TrackByNumber(CarrierCodeExpress, "dkfjdkfj")
+	checkErrorMatches(t, err, "make track request and unmarshal: response error: track detail error:")
 
-	reply, err := f.TrackByNumber(CarrierCodeExpress, "123456789012")
+	// Successful case
+	reply, err = testFedex.TrackByNumber(CarrierCodeExpress, "123456789012")
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// Basic validation
 	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 	if reply.HighestSeverity != "SUCCESS" ||
-		// Basic validation
 		len(reply.Notifications) != 1 ||
 		reply.Notifications[0].Source != "trck" ||
 		reply.Notifications[0].Code != "0" ||
@@ -68,16 +89,37 @@ func TestTrack(t *testing.T) {
 	if reply.EstimatedDelivery().IsZero() {
 		t.Fatal("actual delivery should be set")
 	}
+
+	// Successful case - smart post
+	reply, err = testFedex.TrackByNumber(CarrierCodeSmartPost, "02396343485320033856")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Make sure smart post returned Events
+	if len(reply.Events()) == 0 {
+		t.Fatal("reply should have an event")
+	}
+
+	// Successful case - smart post
+	reply, err = testFedex.TrackByNumber(CarrierCodeSmartPost, "02396343484520070272")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Make sure smart post returned Events
+	if len(reply.Events()) == 0 {
+		t.Fatal("reply should have an event")
+	}
 }
 
 func TestRate(t *testing.T) {
+	// Error case - invalid request
+	_, err := prodFedex.Rate(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
+	checkErrorMatches(t, err, "make rate request and unmarshal: response error: reply got error:")
 
-	_, err := f.Rate(models.Address{}, models.Address{}, models.Contact{}, models.Contact{})
-	if err == nil || !strings.HasPrefix(err.Error(), "make rate request and unmarshal: response error: reply got error:") {
-		t.Fatal("error did not match", err)
-	}
-
-	reply, err := f.Rate(models.Address{
+	// Successful case
+	reply, err := prodFedex.Rate(models.Address{
 		StreetLines:         []string{"1517 Lincoln Blvd"},
 		City:                "Santa Monica",
 		StateOrProvinceCode: "CA",
@@ -102,11 +144,11 @@ func TestRate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Basic validation
 	if reply.Error() != nil {
 		t.Fatal("reply should not have failed")
 	}
 	if reply.HighestSeverity != "SUCCESS" ||
-		// Basic validation
 		len(reply.Notifications) != 1 ||
 		reply.Notifications[0].Source != "crs" ||
 		reply.Notifications[0].Code != "0" ||
@@ -132,33 +174,26 @@ func TestRate(t *testing.T) {
 		reply.RateReplyDetails[0].RatedShipmentDetails[1].RatedPackages[0].PackageRateDetail.NetCharge.Amount == "0.0" {
 		t.Fatal("output not correct")
 	}
-
 	charge, err := reply.TotalCost()
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if charge.Currency != "USD" || charge.Amount == "0.00" {
 		t.Fatal("totalCost should be non-zero, USD")
 	}
 }
 
 func TestShipGround(t *testing.T) {
-	if f.HubID != "" {
-		t.SkipNow()
-	}
+	// Error case - nil shipment
+	_, err := prodFedex.ShipGround(nil)
+	checkErrorMatches(t, err, "create shipment request: empty shipment")
 
-	_, err := f.ShipGround(nil)
-	if err == nil || !strings.HasPrefix(err.Error(), "create shipment request: empty shipment") {
-		t.Fatal("error did not match", err)
-	}
+	// Error case - invalid shipment
+	_, err = prodFedex.ShipGround(&Shipment{})
+	checkErrorMatches(t, err, "make ship ground request and unmarshal: response error: reply got error:")
 
-	_, err = f.ShipGround(&models.Shipment{})
-	if err == nil || !strings.HasPrefix(err.Error(), "make ship ground request and unmarshal: response error: reply got error:") {
-		t.Fatal("error did not match", err)
-	}
-
-	exampleShipment := &models.Shipment{
+	// Successful case
+	exampleShipment := &Shipment{
 		FromAddress: models.Address{
 			StreetLines:         []string{"1517 Lincoln Blvd"},
 			City:                "Santa Monica",
@@ -184,8 +219,9 @@ func TestShipGround(t *testing.T) {
 			EmailAddress: "somecompany@somecompany.com",
 		},
 		NotificationEmail: "dev-notifications@happyreturns.com",
+		Reference:         "My ship ground reference",
 	}
-	reply, err := f.ShipGround(exampleShipment)
+	reply, err := prodFedex.ShipGround(exampleShipment)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,14 +279,14 @@ func TestShipGround(t *testing.T) {
 	}
 
 	// Write label as png, and manually check it
-	err = ioutil.WriteFile(fmt.Sprintf("output-ground-%s.png", f.Key), pngBytes, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf("output-ground-%s.png", prodFedex.Key), pngBytes, 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// it also works with no email
 	exampleShipment.NotificationEmail = ""
-	reply, err = f.ShipGround(exampleShipment)
+	reply, err = prodFedex.ShipGround(exampleShipment)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,113 +298,26 @@ func TestShipGround(t *testing.T) {
 }
 
 func TestShipSmartPost(t *testing.T) {
-	if f.HubID == "" {
-		t.SkipNow()
-	}
-
-	_, err := f.ShipSmartPost(nil)
+	// Error case - nil shipment
+	_, err := laSmartPostFedex.ShipSmartPost(nil)
 	if err == nil || !strings.HasPrefix(err.Error(), "create shipment request: empty shipment") {
 		t.Fatal("error did not match", err)
 	}
 
-	_, err = f.ShipSmartPost(&models.Shipment{})
+	// Error case - invalid shipment
+	_, err = laSmartPostFedex.ShipSmartPost(&Shipment{})
 	if err == nil || !strings.HasPrefix(err.Error(), "make ship smart post request and unmarshal: response error: reply got error:") {
 		t.Fatal("error did not match", err)
 	}
 
-	exampleShipment := &models.Shipment{
-		FromAddress: models.Address{
-			StreetLines:         []string{"1517 Lincoln Blvd"},
-			City:                "Santa Monica",
-			StateOrProvinceCode: "CA",
-			PostalCode:          "90401",
-			CountryCode:         "US",
-		},
-		ToAddress: models.Address{},
-		FromContact: models.Contact{
-			PersonName:   "Jenny",
-			PhoneNumber:  "213 867 5309",
-			EmailAddress: "jenny@jenny.com",
-		},
-		ToContact: models.Contact{
-			CompanyName:  "Some Company",
-			PhoneNumber:  "214 867 5309",
-			EmailAddress: "somecompany@somecompany.com",
-		},
-		NotificationEmail: "dev-notifications@happyreturns.com",
-	}
-	reply, err := f.ShipSmartPost(exampleShipment)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if reply.Error() != nil {
-		fmt.Println(reply)
-		t.Fatal("reply should not have failed")
-	}
-	if reply.HighestSeverity != "SUCCESS" ||
-		// Basic validation
-		len(reply.Notifications) != 1 ||
-		reply.Notifications[0].Source != "ship" ||
-		reply.Notifications[0].Code != "0000" ||
-		reply.Notifications[0].Message != "Success" ||
-		reply.Notifications[0].LocalizedMessage != "Success" ||
-		reply.Version.ServiceID != "ship" ||
-		reply.Version.Major != 23 ||
-		reply.Version.Intermediate != 0 ||
-		reply.Version.Minor != 0 ||
-		reply.JobID == "" ||
-		reply.CompletedShipmentDetail.UsDomestic != "true" ||
-		reply.CompletedShipmentDetail.CarrierCode != "FXSP" ||
-		reply.CompletedShipmentDetail.MasterTrackingId.TrackingIdType != "USPS" ||
-		reply.CompletedShipmentDetail.MasterTrackingId.TrackingNumber == "" ||
-		reply.CompletedShipmentDetail.ServiceTypeDescription != "SMART POST" ||
-		reply.CompletedShipmentDetail.ServiceDescription.ServiceType != "SMART_POST" ||
-		reply.CompletedShipmentDetail.PackagingDescription != "YOUR_PACKAGING" ||
-		reply.CompletedShipmentDetail.OperationalDetail.TransitTime != "TWO_DAYS" ||
-		reply.CompletedShipmentDetail.OperationalDetail.IneligibleForMoneyBackGuarantee != "false" ||
-		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "USPS" ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
-		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PNG" ||
-		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
-		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image) == 0 {
-		t.Fatal("output not correct")
-	}
-
-	// Decode pdf bytes from base64 data
-	pngBytes, err := base64.StdEncoding.DecodeString(string(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Write label as png, and manually check it
-	err = ioutil.WriteFile(fmt.Sprintf("output-smart-post-%s.png", f.Key), pngBytes, 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// it also works with no email
-	exampleShipment.NotificationEmail = ""
-	reply, err = f.ShipSmartPost(exampleShipment)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if reply.Error() != nil {
-		fmt.Println(reply)
-		t.Fatal("reply should not have failed")
-	}
+	// Successful cases
+	testShipSmartPostSuccess(t, laSmartPostFedex)
+	testShipSmartPostSuccess(t, blandonSmartPostFedex)
 }
 
 func TestCreatePickup(t *testing.T) {
 	t.SkipNow() // TODO re-test once we start using this. Saw failures "Ready Time after Cutoff Time"
-	if f.HubID != "" || f.FedexURL != FedexAPIURL {
-		// Test only works for prod, not smartpost
-		t.SkipNow()
-	}
-
-	reply, err := f.CreatePickup(models.PickupLocation{
+	reply, err := laSmartPostFedex.CreatePickup(models.PickupLocation{
 		Address: models.Address{
 			StreetLines:         []string{"1517 Lincoln Blvd"},
 			City:                "Santa Monica",
@@ -411,5 +360,136 @@ func TestCreatePickup(t *testing.T) {
 		reply.PickupConfirmationNumber == "0" ||
 		reply.Location != "SMOA" {
 		t.Fatal("output not correct")
+	}
+}
+
+func TestSendNotifications(t *testing.T) {
+	// Error case - invalid tracking number
+	_, err := prodFedex.SendNotifications("123", "dev-notifications@happyreturns.com")
+	checkErrorMatches(t, err, "make send notifications request: response error: reply got error: Invalid tracking numbers.")
+
+	// Successful case
+	reply, err := prodFedex.SendNotifications("02396343485320152281", "dev-notifications@happyreturns.com")
+	if err != nil {
+		t.Fatal("error did not match", err)
+	}
+	if reply.Error() != nil {
+		t.Fatal("reply should not have failed")
+	}
+
+	// Basic validation
+	if reply.HighestSeverity != "SUCCESS" ||
+		len(reply.Notifications) != 1 ||
+		reply.Notifications[0].Source != "trck" ||
+		reply.Notifications[0].Code != "0" ||
+		reply.Notifications[0].Message != "Request was successfully processed." ||
+		reply.Notifications[0].LocalizedMessage != "Request was successfully processed." ||
+		reply.DuplicateWaybill ||
+		reply.MoreDataAvailable ||
+		len(reply.Packages) != 1 ||
+		reply.Packages[0].TrackingNumber != "02396343485320152281" ||
+		len(reply.Packages[0].TrackingNumberUniqueIdentifiers) != 1 ||
+		reply.Packages[0].CarrierCode != "FXSP" ||
+		reply.Packages[0].ShipDate != "2019-03-11" ||
+		reply.Packages[0].Destination.City != "BLANDON" ||
+		reply.Packages[0].Destination.StateOrProvinceCode != "PA" ||
+		reply.Packages[0].Destination.CountryCode != "US" ||
+		bool(reply.Packages[0].Destination.Residential) ||
+		len(reply.Packages[0].RecipientDetails) != 1 ||
+		len(reply.Packages[0].RecipientDetails[0].NotificationEventsAvailable) != 1 {
+		t.Fatal("output not correct")
+	}
+}
+
+func testShipSmartPostSuccess(t *testing.T, fedexAccount Fedex) {
+	exampleShipment := &Shipment{
+		FromAddress: models.Address{
+			StreetLines:         []string{"1517 Lincoln Blvd"},
+			City:                "Santa Monica",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "90401",
+			CountryCode:         "US",
+		},
+		ToAddress: models.Address{},
+		FromContact: models.Contact{
+			PersonName:   "Jenny",
+			PhoneNumber:  "213 867 5309",
+			EmailAddress: "jenny@jenny.com",
+		},
+		ToContact: models.Contact{
+			CompanyName:  "Some Company",
+			PhoneNumber:  "214 867 5309",
+			EmailAddress: "somecompany@somecompany.com",
+		},
+		NotificationEmail: "dev-notifications@happyreturns.com",
+		Reference:         "My reference",
+	}
+	reply, err := fedexAccount.ShipSmartPost(exampleShipment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Basic validation
+	if reply.Error() != nil {
+		fmt.Println(reply)
+		t.Fatal("reply should not have failed")
+	}
+	if reply.HighestSeverity != "SUCCESS" ||
+		len(reply.Notifications) != 1 ||
+		reply.Notifications[0].Source != "ship" ||
+		reply.Notifications[0].Code != "0000" ||
+		reply.Notifications[0].Message != "Success" ||
+		reply.Notifications[0].LocalizedMessage != "Success" ||
+		reply.Version.ServiceID != "ship" ||
+		reply.Version.Major != 23 ||
+		reply.Version.Intermediate != 0 ||
+		reply.Version.Minor != 0 ||
+		reply.JobID == "" ||
+		reply.CompletedShipmentDetail.UsDomestic != "true" ||
+		reply.CompletedShipmentDetail.CarrierCode != "FXSP" ||
+		reply.CompletedShipmentDetail.MasterTrackingId.TrackingIdType != "USPS" ||
+		reply.CompletedShipmentDetail.MasterTrackingId.TrackingNumber == "" ||
+		reply.CompletedShipmentDetail.ServiceTypeDescription != "SMART POST" ||
+		reply.CompletedShipmentDetail.ServiceDescription.ServiceType != "SMART_POST" ||
+		reply.CompletedShipmentDetail.PackagingDescription != "YOUR_PACKAGING" ||
+		reply.CompletedShipmentDetail.OperationalDetail.TransitTime != "TWO_DAYS" ||
+		reply.CompletedShipmentDetail.OperationalDetail.IneligibleForMoneyBackGuarantee != "false" ||
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds) != 1 ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.TrackingIds[0].TrackingIdType != "USPS" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Type != "OUTBOUND_LABEL" ||
+		reply.CompletedShipmentDetail.CompletedPackageDetails.Label.ImageType != "PNG" ||
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts) != 1 ||
+		len(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image) == 0 {
+		t.Fatal("output not correct")
+	}
+
+	// Decode pdf bytes from base64 data
+	pngBytes, err := base64.StdEncoding.DecodeString(string(reply.CompletedShipmentDetail.CompletedPackageDetails.Label.Parts[0].Image))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Write label as png, and manually check it
+	err = ioutil.WriteFile(fmt.Sprintf("output-smart-post-%s.png", fedexAccount.Key), pngBytes, 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// It also works with no email
+	exampleShipment.NotificationEmail = ""
+	reply, err = fedexAccount.ShipSmartPost(exampleShipment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if reply.Error() != nil {
+		fmt.Println(reply)
+		t.Fatal("reply should not have failed")
+	}
+}
+
+func checkErrorMatches(t *testing.T, err error, expectedText string) {
+	if err == nil || !strings.HasPrefix(err.Error(), expectedText) {
+		t.Fatal("error", err, "doesn't match", expectedText)
 	}
 }

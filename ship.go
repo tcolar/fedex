@@ -8,13 +8,14 @@ import (
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) shipmentEnvelope(shipmentType string, shipment *models.Shipment) (models.Envelope, error) {
+func (f Fedex) shipmentRequest(shipmentType string, shipment *Shipment) (models.Envelope, error) {
 	var serviceType string
 	var weight models.Weight
 	var dimensions models.Dimensions
 	var smartPostDetail *models.SmartPostDetail
 	var specialServicesRequested *models.SpecialServicesRequested
 	var eventNotificationDetail *models.EventNotificationDetail
+	var customerReference models.CustomerReference
 
 	if shipment == nil {
 		return models.Envelope{}, errors.New("empty shipment")
@@ -77,6 +78,11 @@ func (f Fedex) shipmentEnvelope(shipmentType string, shipment *models.Shipment) 
 		if shipment.NotificationEmail != "" {
 			specialServicesRequested.EventNotificationDetail = eventNotificationDetail
 		}
+
+		customerReference = models.CustomerReference{
+			CustomerReferenceType: "RMA_ASSOCIATION",
+			Value: shipment.Reference,
+		}
 	default:
 		serviceType = "FEDEX_GROUND"
 		weight = models.Weight{
@@ -95,6 +101,11 @@ func (f Fedex) shipmentEnvelope(shipmentType string, shipment *models.Shipment) 
 				EventNotificationDetail: eventNotificationDetail,
 			}
 		}
+		customerReference = models.CustomerReference{
+			CustomerReferenceType: "CUSTOMER_REFERENCE",
+			Value: shipment.Reference,
+		}
+
 	}
 
 	req := models.ProcessShipmentRequest{
@@ -147,17 +158,12 @@ func (f Fedex) shipmentEnvelope(shipmentType string, shipment *models.Shipment) 
 			PackageCount:     1,
 			RequestedPackageLineItems: []models.RequestedPackageLineItem{
 				{
-					SequenceNumber:    1,
-					PhysicalPackaging: "BAG",
-					ItemDescription:   "Stuff",
-					CustomerReferences: []models.CustomerReference{
-						{
-							CustomerReferenceType: "CUSTOMER_REFERENCE",
-							Value: "NAFTA_COO",
-						},
-					},
-					Weight:     weight,
-					Dimensions: dimensions,
+					SequenceNumber:     1,
+					PhysicalPackaging:  "BAG",
+					ItemDescription:    "Stuff",
+					CustomerReferences: []models.CustomerReference{customerReference},
+					Weight:             weight,
+					Dimensions:         dimensions,
 				},
 			},
 		},
