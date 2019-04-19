@@ -316,8 +316,7 @@ func TestShipSmartPost(t *testing.T) {
 }
 
 func TestCreatePickup(t *testing.T) {
-	t.SkipNow() // TODO re-test once we start using this. Saw failures "Ready Time after Cutoff Time"
-	reply, err := laSmartPostFedex.CreatePickup(models.PickupLocation{
+	reply, err := prodFedex.CreatePickup(models.PickupLocation{
 		Address: models.Address{
 			StreetLines:         []string{"1517 Lincoln Blvd"},
 			City:                "Santa Monica",

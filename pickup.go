@@ -36,7 +36,7 @@ func (f Fedex) createPickupRequest(pickupLocation models.PickupLocation, toAddre
 					PackageLocation:         "FRONT",    // TODO not necessarily true
 					BuildingPart:            "BUILDING", // TODO not necessarily true
 					BuildingPartDescription: "",
-					ReadyTimestamp:          models.Timestamp(time.Now()),
+					ReadyTimestamp:          models.Timestamp(f.pickupTime()),
 					CompanyCloseTime:        "23:00:00", // TODO not necessarily true
 				},
 				FreightPickupDetail: models.FreightPickupDetail{
@@ -68,4 +68,16 @@ func (f Fedex) createPickupRequest(pickupLocation models.PickupLocation, toAddre
 			},
 		},
 	}
+}
+
+func (f Fedex) pickupTime() time.Time {
+	now := time.Now()
+	year, month, day := now.Date()
+
+	// If it's past 9am, ship the next day, not today
+	if now.Hour() > 9 {
+		day++
+	}
+
+	return time.Date(year, month, day, 9, 0, 0, 0, now.Location())
 }
