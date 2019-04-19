@@ -55,6 +55,11 @@ func (tr *TrackReply) EstimatedDelivery() *time.Time {
 
 // Ship returns the first SHIP timestamp
 func (tr *TrackReply) Ship() *time.Time {
+	pickupTime := tr.searchEvents("PU")
+	if pickupTime != nil {
+		return pickupTime
+	}
+
 	return tr.searchDatesOrTimes("SHIP")
 }
 
@@ -80,5 +85,19 @@ func (tr *TrackReply) searchDatesOrTimes(dateOrTimeType string) *time.Time {
 		}
 	}
 
+	return nil
+}
+
+func (tr *TrackReply) searchEvents(eventType string) *time.Time {
+	for _, completedTrackDetail := range tr.CompletedTrackDetails {
+		for _, trackDetail := range completedTrackDetail.TrackDetails {
+			for _, event := range trackDetail.Events {
+				if event.EventType == eventType {
+					ts := time.Time(event.Timestamp)
+					return &ts
+				}
+			}
+		}
+	}
 	return nil
 }

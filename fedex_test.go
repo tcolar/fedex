@@ -90,6 +90,20 @@ func TestTrack(t *testing.T) {
 		t.Fatal("actual delivery should be set")
 	}
 
+	// Successful case - ground
+	reply, err = prodFedex.TrackByNumber(CarrierCodeGround, "786748004585")
+	if err != nil {
+		t.Fatal(err)
+	}
+	shipmentTime := reply.Ship()
+	if shipmentTime == nil {
+		t.Fatal("should get a shipment time")
+	}
+	s := *shipmentTime
+	if s.Hour() == 0 && s.Minute() == 0 && s.Second() == 0 {
+		t.Fatal("shipmentTime didn't set time of day")
+	}
+
 	// Successful case - smart post
 	reply, err = testFedex.TrackByNumber(CarrierCodeSmartPost, "02396343485320033856")
 	if err != nil {
