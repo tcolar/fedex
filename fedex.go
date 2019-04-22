@@ -37,7 +37,7 @@ type Fedex struct {
 	FedexURL string
 }
 
-// Shipment is convenience struct that has fields for creating a shipment
+// Shipment wraps all the Fedex API fields needed for creating a shipment
 type Shipment struct {
 	FromAddress       models.Address
 	ToAddress         models.Address
