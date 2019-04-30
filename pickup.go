@@ -91,12 +91,12 @@ func (f Fedex) pickupTime(pickupAddress models.Address) time.Time {
 	now := time.Now().In(location)
 	year, month, day := now.Date()
 
-	// If it's past 9am, ship the next day, not today
-	if now.Hour() > 9 {
+	// If it's past 12pm, ship the next day, not today
+	if now.Hour() > 12 {
 		day++
 	}
 
-	return time.Date(year, month, day, 9, 0, 0, 0, location)
+	return time.Date(year, month, day, 12, 0, 0, 0, location)
 }
 
 // toLocation attempts to return the timezone based on state, returning los
