@@ -79,8 +79,18 @@ func (c Commodities) CustomsValue() (Money, error) {
 		return total, nil
 	}
 
-	total.Currency = c[0].CustomsValue.Currency
+	// Set the currency
 	for _, commodity := range c {
+		if commodity.CustomsValue != nil {
+			total.Currency = commodity.CustomsValue.Currency
+			break
+		}
+	}
+
+	for _, commodity := range c {
+		if commodity.CustomsValue == nil {
+			continue
+		}
 		if commodity.CustomsValue.Currency != total.Currency {
 			return total, fmt.Errorf("mismatching customs currencies: %s %s", commodity.CustomsValue.Currency, total.Currency)
 		}

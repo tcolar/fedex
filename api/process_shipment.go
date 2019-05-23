@@ -109,7 +109,7 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 
 	customsValue, err := shipment.Commodities.CustomsValue()
 	if err != nil {
-		return nil, fmt.Errorf("got error: %s", err)
+		return nil, fmt.Errorf("commodities customs value: %s", err)
 	}
 
 	return &models.CustomsClearanceDetail{
