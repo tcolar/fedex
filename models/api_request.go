@@ -12,8 +12,8 @@ type Envelope struct {
 type Request struct {
 	WebAuthenticationDetail WebAuthenticationDetail `xml:"q0:WebAuthenticationDetail"`
 	ClientDetail            ClientDetail            `xml:"q0:ClientDetail"`
-	// TransactionDetail        *TransactionDetail      `xml:"q0:TransactionDetail,omitempty"`
-	Version Version `xml:"q0:Version"`
+	TransactionDetail       *TransactionDetail      `xml:"q0:TransactionDetail,omitempty"`
+	Version                 Version                 `xml:"q0:Version"`
 }
 
 type WebAuthenticationDetail struct {

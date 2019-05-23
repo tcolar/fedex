@@ -1,5 +1,9 @@
 package models
 
+type SendNotificationsBody struct {
+	SendNotificationsRequest SendNotificationsRequest `xml:"q0:SendNotificationsRequest"`
+}
+
 // SendNotificationsRequest
 type SendNotificationsRequest struct {
 	Request

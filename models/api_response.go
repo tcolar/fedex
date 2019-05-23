@@ -6,6 +6,8 @@ import (
 
 const (
 	notificationSeverityError   = "ERROR"
+	notificationSeverityNote    = "NOTE"
+	notificationSeverityWarning = "WARNING" // TODO consider doing something with the response if it's a warning
 	notificationSeveritySuccess = "SUCCESS"
 )
 
@@ -22,7 +24,9 @@ type Reply struct {
 }
 
 func (r Reply) Error() error {
-	if r.HighestSeverity == notificationSeveritySuccess {
+	if r.HighestSeverity == notificationSeveritySuccess ||
+		r.HighestSeverity == notificationSeverityNote ||
+		r.HighestSeverity == notificationSeverityWarning {
 		return nil
 	}
 

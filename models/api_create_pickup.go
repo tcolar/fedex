@@ -1,5 +1,15 @@
 package models
 
+// Pickup wraps all the Fedex API fields needed for creating a pickup
+type Pickup struct {
+	PickupLocation PickupLocation
+	ToAddress      Address
+}
+
+type CreatePickupBody struct {
+	CreatePickupRequest CreatePickupRequest `xml:"q0:CreatePickupRequest"`
+}
+
 type CreatePickupRequest struct {
 	Request
 	OriginDetail         OriginDetail        `xml:"q0:OriginDetail"`

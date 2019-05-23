@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type TrackBody struct {
+	TrackRequest TrackRequest `xml:"q0:TrackRequest"`
+}
+
 type TrackRequest struct {
 	Request
 	SelectionDetails  SelectionDetails `xml:"q0:SelectionDetails"`

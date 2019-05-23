@@ -1,29 +1,51 @@
-package fedex
+package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/happyreturns/fedex/models"
 )
 
-func (f Fedex) rateRequest(fromLocation, toLocation models.Address, fromContact, toContact models.Contact) models.Envelope {
-	return models.Envelope{
+const (
+	rateVersion = "v24"
+)
+
+func (a API) Rate(rate *models.Rate) (*models.RateReply, error) {
+
+	endpoint := fmt.Sprintf("/rate/%s", rateVersion)
+	request := a.rateRequest(rate)
+	response := &models.RateResponseEnvelope{}
+
+	err := a.makeRequestAndUnmarshalResponse(endpoint, request, response)
+	if err != nil {
+		return nil, fmt.Errorf("make rate request and unmarshal: %s", err)
+	}
+
+	return &response.Reply, nil
+}
+
+func (a API) rateRequest(rate *models.Rate) *models.Envelope {
+	rateRequestTypes := "LIST"
+	packageCount := 1
+	return &models.Envelope{
 		Soapenv:   "http://schemas.xmlsoap.org/soap/envelope/",
-		Namespace: "http://fedex.com/ws/rate/v24",
-		Body: struct {
-			RateRequest models.RateRequest `xml:"q0:RateRequest"`
-		}{
+		Namespace: fmt.Sprintf("http://fedex.com/ws/rate/%s", rateVersion),
+		Body: models.RateBody{
 			RateRequest: models.RateRequest{
 				Request: models.Request{
 					WebAuthenticationDetail: models.WebAuthenticationDetail{
 						UserCredential: models.UserCredential{
-							Key:      f.Key,
-							Password: f.Password,
+							Key:      a.Key,
+							Password: a.Password,
 						},
 					},
 					ClientDetail: models.ClientDetail{
-						AccountNumber: f.Account,
-						MeterNumber:   f.Meter,
+						AccountNumber: a.Account,
+						MeterNumber:   a.Meter,
+					},
+					TransactionDetail: &models.TransactionDetail{
+						CustomerTransactionID: "Rate Request",
 					},
 					Version: models.Version{
 						ServiceID: "crs",
@@ -36,29 +58,29 @@ func (f Fedex) rateRequest(fromLocation, toLocation models.Address, fromContact,
 					ServiceType:   "FEDEX_GROUND",
 					PackagingType: "YOUR_PACKAGING",
 					Shipper: models.Shipper{
-						AccountNumber: f.Account,
-						Address:       fromLocation,
-						Contact:       fromContact,
+						AccountNumber: a.Account,
+						Address:       rate.FromAndTo.FromAddress,
+						Contact:       rate.FromAndTo.FromContact,
 					},
 					Recipient: models.Shipper{
-						AccountNumber: f.Account,
-						Address:       toLocation,
-						Contact:       toContact,
+						AccountNumber: a.Account,
+						Address:       rate.FromAndTo.ToAddress,
+						Contact:       rate.FromAndTo.ToContact,
 					},
-					ShippingChargesPayment: models.Payment{
+					ShippingChargesPayment: &models.Payment{
 						PaymentType: "SENDER",
 						Payor: models.Payor{
 							ResponsibleParty: models.ResponsibleParty{
-								AccountNumber: f.Account,
+								AccountNumber: a.Account,
 							},
 						},
 					},
-					LabelSpecification: models.LabelSpecification{
+					LabelSpecification: &models.LabelSpecification{
 						LabelFormatType: "COMMON2D",
 						ImageType:       "PDF",
 					},
-					RateRequestTypes: "LIST",
-					PackageCount:     1,
+					RateRequestTypes: &rateRequestTypes,
+					PackageCount:     &packageCount,
 					RequestedPackageLineItems: []models.RequestedPackageLineItem{
 						{
 							SequenceNumber:    1,
