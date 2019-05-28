@@ -50,8 +50,13 @@ func (f Fedex) CreatePickup(pickup *models.Pickup) (*models.CreatePickupReply, e
 }
 
 func (f Fedex) Ship(shipment *models.Shipment) (*models.ProcessShipmentReply, error) {
-	if f.API.HubID != "" && shipment.IsInternational() {
+	if f.isSmartPost() && shipment.IsInternational() {
 		return nil, errors.New("do not ship internationally with smartpost")
+	}
+
+	// Don't use non-smartpost accounts for returns
+	if !f.isSmartPost() {
+		shipment.Service = "default"
 	}
 
 	reply, err := f.API.ProcessShipment(shipment)
@@ -60,4 +65,8 @@ func (f Fedex) Ship(shipment *models.Shipment) (*models.ProcessShipmentReply, er
 	}
 
 	return reply, nil
+}
+
+func (f Fedex) isSmartPost() bool {
+	return f.API.HubID != ""
 }
