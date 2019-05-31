@@ -169,6 +169,7 @@ type CustomerReference struct {
 
 type CustomsClearanceDetail struct {
 	Brokers                        []Broker           `xml:"q0:Brokers"`
+	ImporterOfRecord               Shipper            `xml:"q0:ImporterOfRecord"`
 	DutiesPayment                  Payment            `xml:"q0:DutiesPayment"`
 	DocumentContent                *string            `xml:"q0:DocumentContent"`
 	CustomsValue                   *Money             `xml:"q0:CustomsValue"`
@@ -389,7 +390,7 @@ type Payment struct {
 }
 
 type Payor struct {
-	ResponsibleParty ResponsibleParty `xml:"q0:ResponsibleParty"`
+	ResponsibleParty Shipper `xml:"q0:ResponsibleParty"`
 }
 
 type RateDetail struct {
@@ -496,10 +497,6 @@ type RequestedShipment struct {
 	EdtRequestType                *string                        `xml:"q0:EdtRequestType"`
 	PackageCount                  *int                           `xml:"q0:PackageCount"`
 	RequestedPackageLineItems     []RequestedPackageLineItem     `xml:"q0:RequestedPackageLineItems"`
-}
-
-type ResponsibleParty struct {
-	AccountNumber string `xml:"q0:AccountNumber"`
 }
 
 type ReturnShipmentDetail struct {

@@ -3,8 +3,6 @@ package api
 import (
 	"fmt"
 
-	"time"
-
 	"github.com/happyreturns/fedex/models"
 )
 
@@ -56,7 +54,7 @@ func (a API) processShipmentRequest(shipment *models.Shipment) (*models.Envelope
 					},
 				},
 				RequestedShipment: models.RequestedShipment{
-					ShipTimestamp: models.Timestamp(time.Now()),
+					ShipTimestamp: models.Timestamp(shipment.ShipTime()),
 					DropoffType:   shipment.DropoffType(),
 					ServiceType:   shipment.ServiceType(),
 					PackagingType: "YOUR_PACKAGING",
@@ -73,7 +71,7 @@ func (a API) processShipmentRequest(shipment *models.Shipment) (*models.Envelope
 					ShippingChargesPayment: &models.Payment{
 						PaymentType: "SENDER",
 						Payor: models.Payor{
-							ResponsibleParty: models.ResponsibleParty{
+							ResponsibleParty: models.Shipper{
 								AccountNumber: a.Account,
 							},
 						},
@@ -112,15 +110,35 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 		return nil, fmt.Errorf("commodities customs value: %s", err)
 	}
 
-	return &models.CustomsClearanceDetail{
-		DutiesPayment: models.Payment{
-			PaymentType: "SENDER",
-			Payor: models.Payor{
-				ResponsibleParty: models.ResponsibleParty{
-					AccountNumber: a.Account,
-				},
+	dutiesPayment := models.Payment{
+		PaymentType: "SENDER",
+		Payor: models.Payor{
+			ResponsibleParty: models.Shipper{
+				AccountNumber: a.Account,
 			},
 		},
+	}
+	if shipment.Importer != "" {
+		dutiesPayment = models.Payment{
+			PaymentType: "THIRD_PARTY",
+			Payor: models.Payor{
+				ResponsibleParty: models.Shipper{
+					AccountNumber: a.Account,
+					Contact: models.Contact{
+						CompanyName: fmt.Sprintf("Importer - %s", shipment.Importer),
+					},
+				},
+			},
+		}
+	}
+
+	return &models.CustomsClearanceDetail{
+		ImporterOfRecord: models.Shipper{
+			Contact: models.Contact{
+				CompanyName: shipment.Importer,
+			},
+		},
+		DutiesPayment:                  dutiesPayment,
 		CustomsValue:                   &customsValue,
 		Commodities:                    shipment.Commodities,
 		PartiesToTransactionAreRelated: false,

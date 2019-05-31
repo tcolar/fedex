@@ -70,7 +70,7 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 					ShippingChargesPayment: &models.Payment{
 						PaymentType: "SENDER",
 						Payor: models.Payor{
-							ResponsibleParty: models.ResponsibleParty{
+							ResponsibleParty: models.Shipper{
 								AccountNumber: a.Account,
 							},
 						},
