@@ -13,7 +13,8 @@ import (
 
 func main() {
 
-	letterhead := base64EncodedFile("letterhead.png")
+	happyReturnsLetterhead := base64EncodedFile("happyreturns_letterhead.png")
+	cutsClothingLetterhead := base64EncodedFile("cutsclothing_letterhead.png")
 	signature := base64EncodedFile("signature.png")
 
 	credData, err := ioutil.ReadFile("../creds.json")
@@ -26,20 +27,26 @@ func main() {
 		panic(err)
 	}
 
-	prodFedex := creds["test"]
+	fedexAccounts := []fedex.Fedex{creds["prod"], creds["test"]}
 
-	err = prodFedex.UploadImages([]models.Image{
-		{
-			ID:    "IMAGE_1",
-			Image: letterhead,
-		},
-		{
-			ID:    "IMAGE_2",
-			Image: signature,
-		},
-	})
-	if err != nil {
-		panic(err)
+	for _, fedexAccount := range fedexAccounts {
+		err = fedexAccount.UploadImages([]models.Image{
+			{
+				ID:    "IMAGE_1",
+				Image: happyReturnsLetterhead,
+			},
+			{
+				ID:    "IMAGE_2",
+				Image: signature,
+			},
+			{
+				ID:    "IMAGE_3",
+				Image: cutsClothingLetterhead,
+			},
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	fmt.Println("DONE")

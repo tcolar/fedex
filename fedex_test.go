@@ -444,6 +444,19 @@ func TestShipInternational(t *testing.T) {
 	exampleShipment.ToContact.CompanyName = "no-email"
 	testShipInternational(t, fedex, exampleShipment)
 
+	// it also works when an importer name is supplied
+	fmt.Println("Has importer name")
+	exampleShipment.Importer = "Rothy's"
+	exampleShipment.ToContact.CompanyName = "has-importer-name"
+	testShipInternational(t, prodFedex, exampleShipment)
+
+	// it also works when we supply a letterhead image id
+	fmt.Println("Has letterhead image id")
+	exampleShipment.LetterheadImageID = "IMAGE_3"
+	exampleShipment.ToContact.CompanyName = "has-letterhead-image-id"
+	testShipInternational(t, prodFedex, exampleShipment)
+	t.SkipNow()
+
 	// it also works when commodities > 800
 	exampleShipment.Commodities = append(exampleShipment.Commodities,
 		models.Commodity{

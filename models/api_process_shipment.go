@@ -1,6 +1,9 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // Shipment wraps all the Fedex API fields needed for creating a shipment
 type Shipment struct {
@@ -11,46 +14,62 @@ type Shipment struct {
 	Service           string
 
 	// Only used for international ground shipments
-	OriginatorName string
-	Commodities    Commodities
+	OriginatorName    string
+	Commodities       Commodities
+	Importer          string
+	LetterheadImageID string
 }
 
 func (s *Shipment) ServiceType() string {
 	switch {
 	case s.Service == "fedex_smart_post",
 		s.Service == "return" && !s.IsInternational():
-		// TODO throw error if smart_post account, international?
 		return "SMART_POST"
 	default:
 		return "FEDEX_GROUND"
 	}
 }
 
+func (s *Shipment) ShipTime() time.Time {
+	t := time.Now()
+	if s.IsInternational() {
+		t = t.Add(10 * 24 * time.Hour)
+	}
+
+	return t
+}
+
 func (s *Shipment) ShippingDocumentSpecification() *ShippingDocumentSpecification {
-	if s.ServiceType() != "SMART_POST" && s.IsInternational() {
-		return &ShippingDocumentSpecification{
-			ShippingDocumentTypes: []string{"COMMERCIAL_INVOICE"},
-			CommercialInvoiceDetail: []CommercialInvoiceDetail{
-				{
-					Format: Format{
-						ImageType: "PDF",
-						StockType: "PAPER_LETTER",
+	if s.ServiceType() == "SMART_POST" || !s.IsInternational() {
+		return nil
+	}
+
+	letterheadImageID := s.LetterheadImageID
+	if s.LetterheadImageID == "" {
+		letterheadImageID = "IMAGE_1"
+	}
+
+	return &ShippingDocumentSpecification{
+		ShippingDocumentTypes: []string{"COMMERCIAL_INVOICE"},
+		CommercialInvoiceDetail: []CommercialInvoiceDetail{
+			{
+				Format: Format{
+					ImageType: "PDF",
+					StockType: "PAPER_LETTER",
+				},
+				CustomerImageUsages: []CustomerImageUsage{
+					{
+						Type: "LETTER_HEAD",
+						ID:   letterheadImageID,
 					},
-					CustomerImageUsages: []CustomerImageUsage{
-						{
-							Type: "LETTER_HEAD",
-							ID:   "IMAGE_1",
-						},
-						{
-							Type: "SIGNATURE",
-							ID:   "IMAGE_2",
-						},
+					{
+						Type: "SIGNATURE",
+						ID:   "IMAGE_2",
 					},
 				},
 			},
-		}
+		},
 	}
-	return nil
 }
 
 func (s *Shipment) LabelSpecification() *LabelSpecification {
