@@ -27,24 +27,26 @@ func main() {
 		panic(err)
 	}
 
-	prodFedex := creds["prod"]
+	fedexAccounts := []fedex.Fedex{creds["prod"], creds["test"]}
 
-	err = prodFedex.UploadImages([]models.Image{
-		{
-			ID:    "IMAGE_1",
-			Image: happyReturnsLetterhead,
-		},
-		{
-			ID:    "IMAGE_2",
-			Image: signature,
-		},
-		{
-			ID:    "IMAGE_3",
-			Image: cutsClothingLetterhead,
-		},
-	})
-	if err != nil {
-		panic(err)
+	for _, fedexAccount := range fedexAccounts {
+		err = fedexAccount.UploadImages([]models.Image{
+			{
+				ID:    "IMAGE_1",
+				Image: happyReturnsLetterhead,
+			},
+			{
+				ID:    "IMAGE_2",
+				Image: signature,
+			},
+			{
+				ID:    "IMAGE_3",
+				Image: cutsClothingLetterhead,
+			},
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	fmt.Println("DONE")
