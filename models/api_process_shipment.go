@@ -33,7 +33,7 @@ func (s *Shipment) ServiceType() string {
 func (s *Shipment) ShipTime() time.Time {
 	t := time.Now()
 	if s.IsInternational() {
-		t = t.Add(10 * 24 * time.Hour)
+		t = t.Add(9 * 24 * time.Hour)
 	}
 
 	return t
