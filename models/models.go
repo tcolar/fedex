@@ -29,7 +29,8 @@ type AncillaryDetail struct {
 }
 
 type Broker struct {
-	Type string `xml:"q0:Type"`
+	Type   string  `xml:"q0:Type"`
+	Broker Shipper `xml:"q0:Broker"`
 }
 
 type Charge struct {

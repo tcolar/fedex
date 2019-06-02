@@ -17,6 +17,7 @@ type Shipment struct {
 	OriginatorName    string
 	Commodities       Commodities
 	Importer          string
+	ImporterAddress   Address
 	LetterheadImageID string
 }
 

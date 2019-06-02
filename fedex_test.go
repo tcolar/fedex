@@ -450,12 +450,24 @@ func TestShipInternational(t *testing.T) {
 	exampleShipment.ToContact.CompanyName = "has-importer-name"
 	testShipInternational(t, prodFedex, exampleShipment)
 
+	// it also works when an importer name and an importer address are supplied
+	fmt.Println("Has importer name and address")
+	exampleShipment.Importer = "Rothy's"
+	exampleShipment.ImporterAddress = models.Address{
+		StreetLines:         []string{"1511 15th Street"},
+		City:                "Santa Monica",
+		StateOrProvinceCode: "CA",
+		PostalCode:          "90404",
+		CountryCode:         "US",
+	}
+	exampleShipment.ToContact.CompanyName = "has-importer-name-and-address"
+	testShipInternational(t, prodFedex, exampleShipment)
+
 	// it also works when we supply a letterhead image id
 	fmt.Println("Has letterhead image id")
 	exampleShipment.LetterheadImageID = "IMAGE_3"
 	exampleShipment.ToContact.CompanyName = "has-letterhead-image-id"
 	testShipInternational(t, prodFedex, exampleShipment)
-	t.SkipNow()
 
 	// it also works when commodities > 800
 	exampleShipment.Commodities = append(exampleShipment.Commodities,

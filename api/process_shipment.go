@@ -110,6 +110,7 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 		return nil, fmt.Errorf("commodities customs value: %s", err)
 	}
 
+	var brokers []models.Broker
 	dutiesPayment := models.Payment{
 		PaymentType: "SENDER",
 		Payor: models.Payor{
@@ -119,24 +120,34 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 		},
 	}
 	if shipment.Importer != "" {
+		retailerAsShipper := models.Shipper{
+			AccountNumber: a.Account,
+			Contact: models.Contact{
+				CompanyName: fmt.Sprintf("Importer - %s", shipment.Importer),
+			},
+			Address: shipment.ImporterAddress,
+		}
 		dutiesPayment = models.Payment{
 			PaymentType: "THIRD_PARTY",
 			Payor: models.Payor{
-				ResponsibleParty: models.Shipper{
-					AccountNumber: a.Account,
-					Contact: models.Contact{
-						CompanyName: fmt.Sprintf("Importer - %s", shipment.Importer),
-					},
-				},
+				ResponsibleParty: retailerAsShipper,
+			},
+		}
+		brokers = []models.Broker{
+			{
+				Type:   "IMPORT",
+				Broker: retailerAsShipper,
 			},
 		}
 	}
 
 	return &models.CustomsClearanceDetail{
+		Brokers: brokers,
 		ImporterOfRecord: models.Shipper{
 			Contact: models.Contact{
 				CompanyName: shipment.Importer,
 			},
+			Address: shipment.ImporterAddress,
 		},
 		DutiesPayment:                  dutiesPayment,
 		CustomsValue:                   &customsValue,
