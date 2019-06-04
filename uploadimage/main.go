@@ -15,6 +15,7 @@ func main() {
 
 	happyReturnsLetterhead := base64EncodedFile("happyreturns_letterhead.png")
 	cutsClothingLetterhead := base64EncodedFile("cutsclothing_letterhead.png")
+	rothysLetterhead := base64EncodedFile("rothys_letterhead.png")
 	signature := base64EncodedFile("signature.png")
 
 	credData, err := ioutil.ReadFile("../creds.json")
@@ -42,6 +43,10 @@ func main() {
 			{
 				ID:    "IMAGE_3",
 				Image: cutsClothingLetterhead,
+			},
+			{
+				ID:    "IMAGE_4",
+				Image: rothysLetterhead,
 			},
 		})
 		if err != nil {
