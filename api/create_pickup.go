@@ -98,7 +98,7 @@ func (a API) createPickupRequest(pickup *models.Pickup, numDaysToDelay int) (*mo
 					},
 				},
 				PackageCount:         1,
-				CarrierCode:          "FDXE",
+				CarrierCode:          "FDXG",
 				Remarks:              "",
 				CommodityDescription: "",
 			},

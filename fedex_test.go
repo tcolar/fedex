@@ -566,10 +566,10 @@ func TestCreatePickup(t *testing.T) {
 					EmailAddress: "jenny@jenny.com",
 				}},
 			ToAddress: models.Address{
-				StreetLines:         []string{"1106 Broadway"},
-				City:                "Santa Monica",
+				StreetLines:         []string{"7631 HAskell Ave"},
+				City:                "Van Nuys",
 				StateOrProvinceCode: "CA",
-				PostalCode:          "90401",
+				PostalCode:          "94106",
 				CountryCode:         "US",
 			},
 		},
@@ -593,8 +593,7 @@ func TestCreatePickup(t *testing.T) {
 		reply.Version.Intermediate != 0 ||
 		reply.Version.Minor != 0 ||
 		reply.PickupConfirmationNumber == "" ||
-		reply.PickupConfirmationNumber == "0" ||
-		reply.Location != "SMOA" {
+		reply.PickupConfirmationNumber == "0" {
 		t.Fatal("output not correct")
 	}
 }
