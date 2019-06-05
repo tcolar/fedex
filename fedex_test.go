@@ -374,8 +374,8 @@ func TestShipSmartPost(t *testing.T) {
 func TestShipInternational(t *testing.T) {
 	var err error
 	fedex := testFedex
+
 	// Successful case
-	harmonizedCode := "640399206000" // TODO
 	exampleShipment := &models.Shipment{
 		FromAndTo: models.FromAndTo{
 			FromAddress: models.Address{
@@ -415,7 +415,6 @@ func TestShipInternational(t *testing.T) {
 				Weight:               models.Weight{Units: "LB", Value: 10.0},
 				UnitPrice:            &models.Money{Currency: "USD", Amount: 25.00},
 				CustomsValue:         &models.Money{Currency: "USD", Amount: 30.00},
-				HarmonizedCode:       &harmonizedCode,
 			},
 			{
 				NumberOfPieces:       1,
@@ -426,7 +425,6 @@ func TestShipInternational(t *testing.T) {
 				Weight:               models.Weight{Units: "LB", Value: 5.0},
 				UnitPrice:            &models.Money{Currency: "USD", Amount: 214.42},
 				CustomsValue:         &models.Money{Currency: "USD", Amount: 381.12},
-				HarmonizedCode:       &harmonizedCode,
 			},
 		},
 	}
@@ -480,7 +478,6 @@ func TestShipInternational(t *testing.T) {
 			Weight:               models.Weight{Units: "LB", Value: 50.0},
 			UnitPrice:            &models.Money{Currency: "USD", Amount: 1214.42},
 			CustomsValue:         &models.Money{Currency: "USD", Amount: 1381.12},
-			HarmonizedCode:       &harmonizedCode,
 		},
 	)
 	fmt.Println(fedex)
