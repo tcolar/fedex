@@ -17,14 +17,12 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 	if err != nil {
 		return fmt.Errorf("marshal request xml: %s", err)
 	}
-	fmt.Println(string(reqXML)) // TODO think about logging
 
 	// Post XML
 	content, err := postXML(a.FedExURL+url, string(reqXML))
 	if err != nil {
 		return fmt.Errorf("post xml: %s", err)
 	}
-	fmt.Println(string(content)) // TODO think about logging
 
 	// Parse response
 	err = xml.Unmarshal(content, response)
