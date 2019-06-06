@@ -132,7 +132,15 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 				},
 			},
 		}
-		brokers = []models.Broker{{Type: "IMPORT"}}
+		brokers = []models.Broker{{
+			Type: "IMPORT",
+			Broker: models.Shipper{
+				AccountNumber: a.Account,
+				Contact: models.Contact{
+					CompanyName: "Fedex logistic",
+				},
+			},
+		}}
 	}
 
 	return &models.CustomsClearanceDetail{
