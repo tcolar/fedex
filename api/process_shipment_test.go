@@ -59,7 +59,7 @@ func TestGroundShipmentNotInternational(t *testing.T) {
 			},
 		},
 		NotificationEmail: "NotificationEmail",
-		Reference:         "REF",
+		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Service:           "FEDEX_GROUND",
 	}
 	envelope, err := testAPI.processShipmentRequest(shipment)
@@ -189,7 +189,7 @@ func TestGroundShipmentInternational(t *testing.T) {
 			},
 		},
 		NotificationEmail: "NotificationEmail",
-		Reference:         "REF",
+		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Service:           "FEDEX_GROUND",
 		Commodities:       commodities,
 	}

@@ -15,6 +15,15 @@ type Address struct {
 	Residential Bool `xml:"q0:Residential"`
 }
 
+func (a Address) ShipsOutWithInternationalEconomy() bool {
+	switch a.CountryCode {
+	case "CA", "US", "":
+		return false
+	default:
+		return true
+	}
+}
+
 type AdvanceNotificationDetail struct {
 	EstimatedTimeOfArrival Timestamp
 	Reason                 string

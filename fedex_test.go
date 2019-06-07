@@ -251,7 +251,7 @@ func TestShipGround(t *testing.T) {
 			},
 		},
 		NotificationEmail: "dev-notifications@happyreturns.com",
-		Reference:         "My ship ground reference",
+		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Service:           "default",
 	}
 	reply, err := prodFedex.Ship(exampleShipment)
@@ -360,7 +360,7 @@ func TestShipSmartPost(t *testing.T) {
 			},
 		},
 		NotificationEmail: "dev-notifications@happyreturns.com",
-		Reference:         "My ship ground reference",
+		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Commodities:       []models.Commodity{},
 	}
 	_, err := laSmartPostFedex.Ship(internationalShipment)
@@ -404,7 +404,7 @@ func TestShipInternational(t *testing.T) {
 			},
 		},
 		NotificationEmail: "dev-notifications@happyreturns.com",
-		Reference:         "My ship ground reference",
+		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Commodities: []models.Commodity{
 			{
 				NumberOfPieces:       1,
@@ -429,12 +429,8 @@ func TestShipInternational(t *testing.T) {
 		},
 	}
 
-	fmt.Println(fedex)
 	exampleShipment.ToContact.CompanyName = "dev"
 	testShipInternational(t, testFedex, exampleShipment)
-
-	exampleShipment.ToContact.CompanyName = "normal"
-	testShipInternational(t, fedex, exampleShipment)
 
 	// it also works with no email
 	fmt.Println("No email")
@@ -442,30 +438,11 @@ func TestShipInternational(t *testing.T) {
 	exampleShipment.ToContact.CompanyName = "no-email"
 	testShipInternational(t, fedex, exampleShipment)
 
-	// it also works when an importer name is supplied
-	fmt.Println("Has importer name")
-	exampleShipment.Importer = "Rothy's"
-	exampleShipment.ToContact.CompanyName = "has-importer-name"
-	testShipInternational(t, prodFedex, exampleShipment)
-
-	// it also works when an importer name and an importer address are supplied
-	fmt.Println("Has importer name and address")
-	exampleShipment.Importer = "Rothy's"
-	exampleShipment.ImporterAddress = models.Address{
-		StreetLines:         []string{"1511 15th Street"},
-		City:                "Santa Monica",
-		StateOrProvinceCode: "CA",
-		PostalCode:          "90404",
-		CountryCode:         "US",
-	}
-	exampleShipment.ToContact.CompanyName = "has-importer-name-and-address"
-	testShipInternational(t, prodFedex, exampleShipment)
-
 	// it also works when we supply a letterhead image id
 	fmt.Println("Has letterhead image id")
 	exampleShipment.LetterheadImageID = "IMAGE_3"
 	exampleShipment.ToContact.CompanyName = "has-letterhead-image-id"
-	testShipInternational(t, prodFedex, exampleShipment)
+	testShipInternational(t, fedex, exampleShipment)
 
 	// it also works when commodities > 800
 	exampleShipment.Commodities = append(exampleShipment.Commodities,
@@ -482,28 +459,39 @@ func TestShipInternational(t *testing.T) {
 	)
 	fmt.Println(fedex)
 	exampleShipment.ToContact.CompanyName = "more-commodities"
-	testShipInternational(t, prodFedex, exampleShipment)
+	testShipInternational(t, fedex, exampleShipment)
 
 	// test commodities with no unitprice
 	for _, commodity := range exampleShipment.Commodities {
 		commodity.UnitPrice = nil
 	}
 	exampleShipment.ToContact.CompanyName = "commodities-no-unit-price"
-	testShipInternational(t, prodFedex, exampleShipment)
+	testShipInternational(t, fedex, exampleShipment)
 
 	// test commodities with no customsvalue
 	for _, commodity := range exampleShipment.Commodities {
 		commodity.CustomsValue = nil
 	}
 	exampleShipment.ToContact.CompanyName = "commodities-no-customs-value"
-	testShipInternational(t, prodFedex, exampleShipment)
+	testShipInternational(t, fedex, exampleShipment)
+
+	// it also works when coming from great britain
+	exampleShipment.FromAddress = models.Address{
+		StreetLines: []string{"1234 Main Street", "Suite 200"},
+		City:        "Nuneaton",
+		PostalCode:  "Cv114al",
+		CountryCode: "GB",
+	}
+	fmt.Println("country is from great britain")
+	exampleShipment.ToContact.CompanyName = "great-britain"
+	testShipInternational(t, fedex, exampleShipment)
 
 	// it tries to make a request with no commodities and returns back the error
 	// fedex gives us
 	// Error case - invalid tracking number
 	exampleShipment.Commodities = nil
 	exampleShipment.ToContact.CompanyName = "no-commodities"
-	_, err = prodFedex.Ship(exampleShipment)
+	_, err = fedex.Ship(exampleShipment)
 	checkErrorMatches(t, err, "api process shipment: make process shipment request and unmarshal: response error:")
 }
 
@@ -656,7 +644,7 @@ func testShipSmartPostSuccess(t *testing.T, fedexAccount Fedex) {
 			},
 		},
 		NotificationEmail: "dev-notifications@happyreturns.com",
-		Reference:         "My reference",
+		References:        []string{"REF", "ORDER_NUM some string greater than 20 chars"},
 		Service:           "return",
 	}
 	reply, err := fedexAccount.Ship(exampleShipment)

@@ -110,47 +110,43 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 		return nil, fmt.Errorf("commodities customs value: %s", err)
 	}
 
-	var brokers []models.Broker
-	dutiesPayment := models.Payment{
-		PaymentType: "SENDER",
-		Payor: models.Payor{
-			ResponsibleParty: models.Shipper{
-				AccountNumber: a.Account,
-			},
+	importerOfRecord := models.Shipper{
+		// TODO consider making this configurable i.e. passed in from
+		// models.Shipment
+		AccountNumber: a.Account,
+		Contact: models.Contact{
+			CompanyName: "Happy Returns",
+			PhoneNumber: "424 325 9510",
+		},
+		Address: models.Address{
+			StreetLines:         []string{"1106 Broadway"},
+			City:                "Santa Monica",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "90401",
+			CountryCode:         "US",
 		},
 	}
-	if shipment.Importer != "" {
-		dutiesPayment = models.Payment{
-			PaymentType: "RECIPIENT",
-			Payor: models.Payor{
-				ResponsibleParty: models.Shipper{
-					AccountNumber: a.Account,
-					Contact: models.Contact{
-						CompanyName: shipment.Importer,
-					},
-					Address: shipment.ImporterAddress,
-				},
-			},
-		}
-		brokers = []models.Broker{{
+	dutiesPayment := models.Payment{
+		PaymentType: "RECIPIENT",
+		Payor: models.Payor{
+			ResponsibleParty: importerOfRecord,
+		},
+	}
+
+	// Fedex is broker (customs broker).
+	// reference field - rothy's that you can cross reference or purchase order number or return label number for a rothy's shipment
+	// what you put into airway bill, so you can cross reference
+	return &models.CustomsClearanceDetail{
+		Brokers: []models.Broker{{
 			Type: "IMPORT",
 			Broker: models.Shipper{
 				AccountNumber: a.Account,
 				Contact: models.Contact{
-					CompanyName: "Fedex logistic",
+					CompanyName: "FedEx Logistics",
 				},
 			},
-		}}
-	}
-
-	return &models.CustomsClearanceDetail{
-		Brokers: brokers,
-		ImporterOfRecord: models.Shipper{
-			Contact: models.Contact{
-				CompanyName: shipment.Importer,
-			},
-			Address: shipment.ImporterAddress,
-		},
+		}},
+		ImporterOfRecord:               importerOfRecord,
 		DutiesPayment:                  dutiesPayment,
 		CustomsValue:                   &customsValue,
 		Commodities:                    shipment.Commodities,

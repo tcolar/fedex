@@ -10,14 +10,12 @@ type Shipment struct {
 	FromAndTo
 
 	NotificationEmail string
-	Reference         string
+	References        []string
 	Service           string
 
 	// Only used for international ground shipments
 	OriginatorName    string
 	Commodities       Commodities
-	Importer          string
-	ImporterAddress   Address
 	LetterheadImageID string
 }
 
@@ -26,6 +24,8 @@ func (s *Shipment) ServiceType() string {
 	case s.Service == "fedex_smart_post",
 		s.Service == "return" && !s.IsInternational():
 		return "SMART_POST"
+	case s.IsInternational() && s.FromAddress.ShipsOutWithInternationalEconomy():
+		return "INTERNATIONAL_ECONOMY"
 	default:
 		return "FEDEX_GROUND"
 	}
@@ -74,7 +74,7 @@ func (s *Shipment) ShippingDocumentSpecification() *ShippingDocumentSpecificatio
 }
 
 func (s *Shipment) LabelSpecification() *LabelSpecification {
-	if s.ServiceType() == "FEDEX_GROUND" && s.IsInternational() {
+	if s.IsInternational() {
 		stockType := "PAPER_4X6"
 		return &LabelSpecification{
 			LabelFormatType: "COMMON2D",
@@ -159,19 +159,27 @@ func (s *Shipment) SpecialServicesRequested() *SpecialServicesRequested {
 	}
 }
 
-func (s *Shipment) CustomerReference() CustomerReference {
-	switch s.ServiceType() {
-	case "SMART_POST":
-		return CustomerReference{
-			CustomerReferenceType: "RMA_ASSOCIATION",
-			Value: s.Reference,
-		}
-	default:
-		return CustomerReference{
-			CustomerReferenceType: "CUSTOMER_REFERENCE",
-			Value: s.Reference,
+func (s *Shipment) CustomerReferences() []CustomerReference {
+	customerReferences := make([]CustomerReference, len(s.References))
+	for idx, reference := range s.References {
+		switch s.ServiceType() {
+		case "SMART_POST":
+			if len(reference) > 20 {
+				reference = reference[0:20]
+			}
+
+			customerReferences[idx] = CustomerReference{
+				CustomerReferenceType: "RMA_ASSOCIATION",
+				Value:                 reference,
+			}
+		default:
+			customerReferences[idx] = CustomerReference{
+				CustomerReferenceType: "CUSTOMER_REFERENCE",
+				Value:                 reference,
+			}
 		}
 	}
+	return customerReferences
 }
 
 func defaultEventNotificationDetail(notificationEmail string) *EventNotificationDetail {
@@ -208,7 +216,7 @@ func (s *Shipment) RequestedPackageLineItems() []RequestedPackageLineItem {
 		SequenceNumber:     1,
 		PhysicalPackaging:  "BAG",
 		ItemDescription:    "ItemDescription",
-		CustomerReferences: []CustomerReference{s.CustomerReference()},
+		CustomerReferences: s.CustomerReferences(),
 		Weight:             s.Weight(),
 		Dimensions:         s.Dimensions(),
 	}}
