@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -121,7 +120,7 @@ func calculatePickupTime(pickupAddress models.Address, numDaysToDelay int) (time
 
 	// Don't schedule pickups for Saturday or Sunday
 	if pickupTime.Weekday() == time.Saturday || pickupTime.Weekday() == time.Sunday {
-		return time.Time{}, errors.New("no pickups on saturday or sunday")
+		return time.Time{}, fmt.Errorf("no pickups on saturday or sunday %d", numDaysToDelay)
 	}
 
 	year, month, day := pickupTime.Date()
