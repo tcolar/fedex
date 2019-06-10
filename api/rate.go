@@ -28,6 +28,11 @@ func (a API) Rate(rate *models.Rate) (*models.RateReply, error) {
 func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 	rateRequestTypes := "LIST"
 	packageCount := 1
+	serviceType := "FEDEX_GROUND"
+	if rate.FromAddress.ShipsOutWithInternationalEconomy() {
+		serviceType = "INTERNATIONAL_ECONOMY"
+	}
+
 	return &models.Envelope{
 		Soapenv:   "http://schemas.xmlsoap.org/soap/envelope/",
 		Namespace: fmt.Sprintf("http://fedex.com/ws/rate/%s", rateVersion),
@@ -55,7 +60,7 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 				RequestedShipment: models.RequestedShipment{
 					ShipTimestamp: models.Timestamp(time.Now()),
 					DropoffType:   "REGULAR_PICKUP",
-					ServiceType:   "FEDEX_GROUND",
+					ServiceType:   serviceType,
 					PackagingType: "YOUR_PACKAGING",
 					Shipper: models.Shipper{
 						AccountNumber: a.Account,
@@ -100,7 +105,7 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 							CustomerReferences: []models.CustomerReference{
 								{
 									CustomerReferenceType: "CUSTOMER_REFERENCE",
-									Value: "NAFTA_COO",
+									Value:                 "NAFTA_COO",
 								},
 							},
 						},
