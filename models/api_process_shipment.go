@@ -31,6 +31,15 @@ func (s *Shipment) ServiceType() string {
 	}
 }
 
+func (s *Shipment) Broker() string {
+	switch s.ServiceType() {
+	case "INTERNATIONAL_ECONOMY":
+		return "FedEx Express"
+	default:
+		return "FedEx Logistics"
+	}
+}
+
 func (s *Shipment) ShipTime() time.Time {
 	t := time.Now()
 	if s.IsInternational() {

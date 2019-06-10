@@ -111,8 +111,6 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 	}
 
 	importerOfRecord := models.Shipper{
-		// TODO consider making this configurable i.e. passed in from
-		// models.Shipment
 		AccountNumber: a.Account,
 		Contact: models.Contact{
 			CompanyName: "Happy Returns",
@@ -133,16 +131,13 @@ func (a API) customsClearanceDetail(shipment *models.Shipment) (*models.CustomsC
 		},
 	}
 
-	// Fedex is broker (customs broker).
-	// reference field - rothy's that you can cross reference or purchase order number or return label number for a rothy's shipment
-	// what you put into airway bill, so you can cross reference
 	return &models.CustomsClearanceDetail{
 		Brokers: []models.Broker{{
 			Type: "IMPORT",
 			Broker: models.Shipper{
 				AccountNumber: a.Account,
 				Contact: models.Contact{
-					CompanyName: "FedEx Logistics",
+					CompanyName: shipment.Broker(),
 				},
 			},
 		}},

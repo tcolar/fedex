@@ -6,9 +6,11 @@ package fedex
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/happyreturns/fedex/api"
 	"github.com/happyreturns/fedex/models"
+	log "github.com/sirupsen/logrus"
 )
 
 // Convenience constants for standard Fedex API URLs
@@ -29,6 +31,11 @@ type Fedex struct {
 	api.API
 }
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+}
+
 // CreatePickup creates a pickup
 func (f Fedex) CreatePickup(pickup *models.Pickup) (*models.CreatePickupReply, error) {
 	var (
@@ -39,8 +46,18 @@ func (f Fedex) CreatePickup(pickup *models.Pickup) (*models.CreatePickupReply, e
 	for delay := 0; delay <= 5; delay++ {
 		reply, err = f.API.CreatePickup(pickup, delay)
 		if err == nil {
+			log.WithFields(log.Fields{
+				"pickupConfirmationNumber": reply.PickupConfirmationNumber,
+				"delay":                    delay,
+				"streetLines":              pickup.PickupLocation.Address.StreetLines,
+			}).Info("made pickup")
 			break
 		}
+		log.WithFields(log.Fields{
+			"delay":       delay,
+			"streetLines": pickup.PickupLocation.Address.StreetLines,
+			"err":         err,
+		}).Info("failed pickup")
 	}
 
 	if err != nil {

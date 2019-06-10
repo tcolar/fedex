@@ -564,6 +564,7 @@ func TestCreatePickup(t *testing.T) {
 	}
 
 	if reply.Error() != nil {
+		fmt.Println(reply.Error())
 		t.Fatal("reply should not have failed")
 	}
 
