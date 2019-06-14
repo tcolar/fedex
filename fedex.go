@@ -47,16 +47,16 @@ func (f Fedex) CreatePickup(pickup *models.Pickup) (*models.CreatePickupReply, e
 		reply, err = f.API.CreatePickup(pickup, delay)
 		if err == nil {
 			log.WithFields(log.Fields{
-				"pickupConfirmationNumber": reply.PickupConfirmationNumber,
-				"delay":                    delay,
-				"streetLines":              pickup.PickupLocation.Address.StreetLines,
+				"pickup": pickup,
+				"delay":  delay,
+				"reply":  reply,
 			}).Info("made pickup")
 			break
 		}
 		log.WithFields(log.Fields{
-			"delay":       delay,
-			"streetLines": pickup.PickupLocation.Address.StreetLines,
-			"err":         err,
+			"pickup": pickup,
+			"delay":  delay,
+			"err":    err,
 		}).Info("failed pickup")
 	}
 
