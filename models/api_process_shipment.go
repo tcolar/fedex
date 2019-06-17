@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"time"
 )
 
@@ -17,6 +18,14 @@ type Shipment struct {
 	OriginatorName    string
 	Commodities       Commodities
 	LetterheadImageID string
+}
+
+var (
+	nonAlphanumericRegex *regexp.Regexp
+)
+
+func init() {
+	nonAlphanumericRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
 }
 
 func (s *Shipment) ServiceType() string {
@@ -173,22 +182,31 @@ func (s *Shipment) CustomerReferences() []CustomerReference {
 	for idx, reference := range s.References {
 		switch s.ServiceType() {
 		case "SMART_POST":
-			if len(reference) > 20 {
-				reference = reference[0:20]
-			}
-
 			customerReferences[idx] = CustomerReference{
 				CustomerReferenceType: "RMA_ASSOCIATION",
-				Value:                 reference,
+				Value:                 sanitizeReferenceForFedexAPI(reference),
 			}
 		default:
 			customerReferences[idx] = CustomerReference{
 				CustomerReferenceType: "CUSTOMER_REFERENCE",
-				Value:                 reference,
+				Value:                 sanitizeReferenceForFedexAPI(reference),
 			}
 		}
 	}
 	return customerReferences
+}
+
+func sanitizeReferenceForFedexAPI(reference string) string {
+
+	// Remove non-alphanumeric chars
+	validatedReference := nonAlphanumericRegex.ReplaceAllString(reference, "")
+
+	// Trim length
+	if len(validatedReference) > 20 {
+		validatedReference = validatedReference[0:20]
+	}
+
+	return validatedReference
 }
 
 func defaultEventNotificationDetail(notificationEmail string) *EventNotificationDetail {
