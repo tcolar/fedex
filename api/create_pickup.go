@@ -31,11 +31,15 @@ func (a API) CreatePickup(pickup *models.Pickup, numDaysToDelay int) (*models.Cr
 	endpoint := fmt.Sprintf("/pickup/%s", createPickupVersion)
 	response := &models.CreatePickupResponseEnvelope{}
 	err = a.makeRequestAndUnmarshalResponse(endpoint, request, response)
-	if err != nil {
-		return nil, fmt.Errorf("make create pickup request and unmarshal: %s", err)
-	}
 
-	return &response.Reply, nil
+	switch {
+	case err != nil && strings.Contains(err.Error(), "pickup already exists"):
+		return nil, models.PickupAlreadyExistsError{}
+	case err != nil:
+		return nil, fmt.Errorf("make create pickup request and unmarshal: %s", err)
+	default:
+		return &response.Reply, nil
+	}
 }
 
 func (a API) createPickupRequest(pickup *models.Pickup, numDaysToDelay int) (*models.Envelope, error) {

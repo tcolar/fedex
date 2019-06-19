@@ -45,25 +45,33 @@ func (f Fedex) CreatePickup(pickup *models.Pickup) (*models.CreatePickupReply, e
 
 	for delay := 0; delay <= 5; delay++ {
 		reply, err = f.API.CreatePickup(pickup, delay)
-		if err == nil {
+		switch err.(type) {
+		case nil:
 			log.WithFields(log.Fields{
 				"pickup": pickup,
 				"delay":  delay,
 				"reply":  reply,
 			}).Info("made pickup")
-			break
+			return reply, nil
+
+		case models.PickupAlreadyExistsError:
+			log.WithFields(log.Fields{
+				"pickup": pickup,
+				"delay":  delay,
+				"reply":  reply,
+			}).Info("pickup already exists")
+			return &models.CreatePickupReply{}, nil
+
+		default:
+			log.WithFields(log.Fields{
+				"pickup": pickup,
+				"delay":  delay,
+				"err":    err,
+			}).Info("failed pickup")
 		}
-		log.WithFields(log.Fields{
-			"pickup": pickup,
-			"delay":  delay,
-			"err":    err,
-		}).Info("failed pickup")
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("api create pickup: %s", err)
-	}
-	return reply, nil
+	return nil, fmt.Errorf("api create pickup: %s", err)
 }
 
 func (f Fedex) Ship(shipment *models.Shipment) (*models.ProcessShipmentReply, error) {
