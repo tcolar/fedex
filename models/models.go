@@ -24,6 +24,22 @@ func (a Address) ShipsOutWithInternationalEconomy() bool {
 	}
 }
 
+type AddressReply struct {
+	// When we use Address in a request, we want to xml marshall the fields to
+	// "q0:fieldName" but on unmarshalling an Address in a response, we want to
+	// unmarshal the fields as just "fieldName"
+	// TODO instead of two structs, we could merge this with Address, add
+	// omitemptys to each of the below fields, so that whenever we marshall, we
+	// marshall the q0 fields, but on unmarshalling a response, we check the
+	// below fields. i'm not sure what's best
+	StreetLines         []string `xml:"StreetLines"`
+	City                string   `xml:"City"`
+	StateOrProvinceCode string   `xml:"StateOrProvinceCode"`
+	PostalCode          string   `xml:"PostalCode"`
+	CountryCode         string   `xml:"CountryCode"`
+	CountryName         string   `xml:"CountryName"`
+}
+
 type AdvanceNotificationDetail struct {
 	EstimatedTimeOfArrival Timestamp
 	Reason                 string
@@ -662,15 +678,15 @@ type TrackDetail struct {
 
 	TrackAdvanceNotificationDetail AdvanceNotificationDetail
 	Shipper                        Contact
-	ShipperAddress                 Address
-	OriginLocationAddress          Address
+	ShipperAddress                 AddressReply
+	OriginLocationAddress          AddressReply
 
 	// DatesOrTimes contains estimated arrivals, departures, etc.
 	DatesOrTimes []DateOrTimestamp
 
 	Recipient                              Contact
-	DestinationAddress                     Address
-	ActualDeliveryAddress                  Address
+	DestinationAddress                     AddressReply
+	ActualDeliveryAddress                  AddressReply
 	SpecialHandlings                       []SpecialHandling
 	DeliveryLocationType                   string
 	DeliveryLocationDescription            string

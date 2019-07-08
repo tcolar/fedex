@@ -78,6 +78,9 @@ func TestTrack(t *testing.T) {
 		reply.CompletedTrackDetails[0].TrackDetails[0].CarrierCode != "FDXE" {
 		t.Fatal("output not correct")
 	}
+	if city := reply.CompletedTrackDetails[0].TrackDetails[0].DestinationAddress.City; city != "EASTON" {
+		t.Fatal(city, "should have destination address city")
+	}
 
 	// Check the timestamps make sense
 	if len(reply.CompletedTrackDetails[0].TrackDetails[0].DatesOrTimes) == 0 {
@@ -105,20 +108,15 @@ func TestTrack(t *testing.T) {
 	}
 
 	// Successful case - smart post
-	reply, err = testFedex.TrackByNumber(CarrierCodeSmartPost, "02396343485320033856")
+	reply, err = prodFedex.TrackByNumber(CarrierCodeSmartPost, "02396343485321245074")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Make sure smart post returned Events
-	if len(reply.Events()) == 0 {
-		t.Fatal("reply should have an event")
+	if city := reply.CompletedTrackDetails[0].TrackDetails[0].ShipperAddress.City; city != "ADDISON" {
+		t.Fatal(city, "should have shipper address city")
 	}
-
-	// Successful case - smart post
-	reply, err = testFedex.TrackByNumber(CarrierCodeSmartPost, "02396343484520070272")
-	if err != nil {
-		t.Fatal(err)
+	if city := reply.CompletedTrackDetails[0].TrackDetails[0].DestinationAddress.City; city != "BLANDON" {
+		t.Fatal(city, "should have destination address city")
 	}
 
 	// Make sure smart post returned Events
