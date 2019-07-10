@@ -76,7 +76,7 @@ func (a API) createPickupRequest(pickup *models.Pickup, numDaysToDelay int) (*mo
 					BuildingPart:            "SUITE",
 					BuildingPartDescription: "",
 					ReadyTimestamp:          models.Timestamp(pickupTime),
-					CompanyCloseTime:        "16:00:00", // TODO not necessarily true
+					CompanyCloseTime:        pickupTime.Add(4 * time.Hour).Format("15:04:05-07:00"),
 				},
 				FreightPickupDetail: models.FreightPickupDetail{
 					ApprovedBy:  pickup.PickupLocation.Contact,
