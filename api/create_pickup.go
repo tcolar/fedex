@@ -128,7 +128,7 @@ func calculatePickupTime(pickupAddress models.Address, numDaysToDelay int) (time
 	}
 
 	year, month, day := pickupTime.Date()
-	return time.Date(year, month, day, 12, 0, 0, 0, location), nil
+	return time.Date(year, month, day, 14, 0, 0, 0, location), nil
 }
 
 // toLocation attempts to return the timezone based on state, returning los
