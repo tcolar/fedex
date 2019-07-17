@@ -76,7 +76,7 @@ func (a API) createPickupRequest(pickup *models.Pickup, numDaysToDelay int) (*mo
 					BuildingPart:            "SUITE",
 					BuildingPartDescription: "",
 					ReadyTimestamp:          models.Timestamp(pickupTime),
-					CompanyCloseTime:        pickupTime.Add(4 * time.Hour).Format("15:04:05-07:00"),
+					CompanyCloseTime:        pickupTime.Add(8 * time.Hour).Format("15:04:05-07:00"),
 				},
 				FreightPickupDetail: models.FreightPickupDetail{
 					ApprovedBy:  pickup.PickupLocation.Contact,
@@ -117,18 +117,22 @@ func calculatePickupTime(pickupAddress models.Address, numDaysToDelay int) (time
 
 	pickupTime := time.Now().In(location).Add(time.Duration(numDaysToDelay*24) * time.Hour)
 
-	// If it's past 12pm, ship the next day, not today
-	if pickupTime.Hour() >= 12 {
+	// If it's past the ready time of the current day, ship the next day, not today
+	if pickupTime.After(timeForReadyPickup(pickupTime)) {
 		pickupTime = pickupTime.Add(24 * time.Hour)
 	}
+	pickupTime = timeForReadyPickup(pickupTime)
 
 	// Don't schedule pickups for Saturday or Sunday
 	if pickupTime.Weekday() == time.Saturday || pickupTime.Weekday() == time.Sunday {
 		return time.Time{}, fmt.Errorf("no pickups on saturday or sunday %d", numDaysToDelay)
 	}
 
-	year, month, day := pickupTime.Date()
-	return time.Date(year, month, day, 14, 0, 0, 0, location), nil
+	return pickupTime, nil
+}
+
+func timeForReadyPickup(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 10, 45, 0, 0, t.Location())
 }
 
 // toLocation attempts to return the timezone based on state, returning los
