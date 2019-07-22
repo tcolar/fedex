@@ -1,9 +1,21 @@
 package models
 
+import "time"
+
 // Pickup wraps all the Fedex API fields needed for creating a pickup
 type Pickup struct {
 	PickupLocation PickupLocation
 	ToAddress      Address
+}
+
+type PickupSuccess struct {
+	ConfirmationNumber string
+	Window             PickupTimeWindow
+}
+
+type PickupTimeWindow struct {
+	ReadyTime time.Time
+	CloseTime time.Time
 }
 
 type CreatePickupBody struct {

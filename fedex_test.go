@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/happyreturns/fedex/models"
 )
@@ -532,53 +533,64 @@ func testShipInternational(t *testing.T, f Fedex, shipment *models.Shipment) {
 }
 
 func TestCreatePickup(t *testing.T) {
+	// This will fail if there's a pickup already scheduled. Delete the pickup in
+	// the FedEx console to run the test in that case
 	t.SkipNow()
-	reply, err := prodFedex.CreatePickup(
-		&models.Pickup{
-			PickupLocation: models.PickupLocation{
-				Address: models.Address{
-					StreetLines:         []string{"1517 Lincoln Blvd"},
-					City:                "Santa Monica",
-					StateOrProvinceCode: "CA",
-					PostalCode:          "90401",
-					CountryCode:         "US",
-				},
-				Contact: models.Contact{
-					PersonName:   "Jenny",
-					PhoneNumber:  "213 867 5309",
-					EmailAddress: "jenny@jenny.com",
-				}},
-			ToAddress: models.Address{
-				StreetLines:         []string{"7631 HAskell Ave"},
-				City:                "Van Nuys",
+	pickup := &models.Pickup{
+		PickupLocation: models.PickupLocation{
+			Address: models.Address{
+				StreetLines:         []string{"1517 Lincoln Blvd"},
+				City:                "Santa Monica",
 				StateOrProvinceCode: "CA",
-				PostalCode:          "94106",
+				PostalCode:          "90401",
 				CountryCode:         "US",
 			},
+			Contact: models.Contact{
+				PersonName:   "Jenny",
+				PhoneNumber:  "213 867 5309",
+				EmailAddress: "jenny@jenny.com",
+			}},
+		ToAddress: models.Address{
+			StreetLines:         []string{"7631 HAskell Ave"},
+			City:                "Van Nuys",
+			StateOrProvinceCode: "CA",
+			PostalCode:          "94106",
+			CountryCode:         "US",
 		},
-	)
+	}
+
+	success, err := prodFedex.CreatePickup(pickup)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if reply.Error() != nil {
-		fmt.Println(reply.Error())
-		t.Fatal("reply should not have failed")
+	if success.ConfirmationNumber == "" {
+		t.Fatal("confirmation number should be non-empty")
 	}
 
-	if reply.HighestSeverity != "SUCCESS" ||
-		// Basic validation
-		len(reply.Notifications) != 1 ||
-		reply.Notifications[0].Source != "disp" ||
-		reply.Notifications[0].Code != "0000" ||
-		reply.Notifications[0].Message != "Success" ||
-		reply.Version.ServiceID != "disp" ||
-		reply.Version.Major != 17 ||
-		reply.Version.Intermediate != 0 ||
-		reply.Version.Minor != 0 ||
-		reply.PickupConfirmationNumber == "" ||
-		reply.PickupConfirmationNumber == "0" {
-		t.Fatal("output not correct")
+	readyTime := success.Window.ReadyTime
+	closeTime := success.Window.CloseTime
+	today := time.Now().In(laTimeZone)
+	tomorrow := today.Add(24 * time.Hour)
+	if !readyTime.Equal(time.Date(today.Year(), today.Month(), today.Day(), 10, 45, 0, 0, laTimeZone)) &&
+		!readyTime.Equal(time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 10, 45, 0, 0, laTimeZone)) {
+		t.Fatal("readyTime should set at 10:45 either today or tomorrow")
+	}
+
+	if !closeTime.Equal(time.Date(readyTime.Year(), readyTime.Month(), readyTime.Day(), 18, 45, 0, 0, laTimeZone)) {
+		t.Fatal("closeTime should set at 18:45 on the same day as the ready time")
+	}
+
+	success, err = prodFedex.CreatePickup(pickup)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if success.ConfirmationNumber != "" {
+		t.Fatal("confirmation number should be empty since the pickup already exists")
+	}
+	if success.Window.ReadyTime != readyTime || success.Window.CloseTime != closeTime {
+		t.Fatal("readyTime and closeTime should be the same from the previous pickup call")
 	}
 }
 
