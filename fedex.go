@@ -132,7 +132,7 @@ func toLocation(pickupAddress models.Address) (*time.Location, error) {
 		tzDatabaseName = "America/Chicago"
 	case "AZ", "CO", "ID", "MT", "NM", "UT", "WY":
 		tzDatabaseName = "America/Denver"
-	case "CT", "DE", "FL", "GA", "IN", "ME", "MD", "MA", "MI", "NH", "NJ", "NY", "NC", "OH", "PA", "RI", "SC", "VT", "VA", "WV":
+	case "CT", "DC", "DE", "FL", "GA", "IN", "ME", "MD", "MA", "MI", "NH", "NJ", "NY", "NC", "OH", "PA", "RI", "SC", "VT", "VA", "WV":
 		tzDatabaseName = "America/New_York"
 	default:
 		return laTimeZone, nil
