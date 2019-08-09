@@ -104,9 +104,9 @@ func pickupTimeWindow(pickupAddress models.Address, numDaysToDelay int) (*models
 	}
 	readyTime = timeForReadyPickup(readyTime)
 
-	// Don't schedule pickups for Saturday or Sunday
-	if readyTime.Weekday() == time.Saturday || readyTime.Weekday() == time.Sunday {
-		return nil, fmt.Errorf("no pickups on saturday or sunday %d", numDaysToDelay)
+	// Don't schedule pickups for Sunday
+	if readyTime.Weekday() == time.Sunday {
+		return nil, fmt.Errorf("no pickups on sunday %d", numDaysToDelay)
 	}
 
 	return &models.PickupTimeWindow{
