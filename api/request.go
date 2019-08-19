@@ -42,6 +42,10 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 
 	// Check if reply failed (FedEx responds with 200 even though it failed)
 	if err := response.Error(); err != nil {
+		logger.WithFields(logrus.Fields{
+			"url":      url,
+			"response": string(content),
+		}).Info("receive-error-response")
 		return fmt.Errorf("response error: %s", err)
 	}
 
@@ -50,10 +54,6 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 
 // postXML to Fedex API and return response
 func postXML(url, xml string) ([]byte, error) {
-	logger.WithFields(logrus.Fields{
-		"url":     url,
-		"request": xml,
-	}).Info("make-request")
 	resp, err := http.Post(url, "text/xml", strings.NewReader(xml))
 	if err != nil {
 		return nil, err
@@ -64,9 +64,5 @@ func postXML(url, xml string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read all bytes: %s", err)
 	}
-	logger.WithFields(logrus.Fields{
-		"url":      url,
-		"response": string(content),
-	}).Info("receive-response")
 	return content, nil
 }
