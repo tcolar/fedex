@@ -45,7 +45,8 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 		logger.WithFields(logrus.Fields{
 			"url":      url,
 			"response": string(content),
-		}).Info("receive-error-response")
+			"err":      err,
+		}).Error("receive-error-response")
 		return fmt.Errorf("response error: %s", err)
 	}
 
