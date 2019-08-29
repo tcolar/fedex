@@ -1,11 +1,11 @@
 package api
 
 type API struct {
-	Key      string
-	Password string
-	Account  string
-	Meter    string
-	HubID    string // for SmartPost
+	Key      string `json:"key"`
+	Password string `json:"password"`
+	Account  string `json:"account"`
+	Meter    string `json:"meter"`
+	HubID    string `json:"hubID"` // for SmartPost
 
-	FedExURL string
+	FedExURL string `json:"fedexURL"`
 }
