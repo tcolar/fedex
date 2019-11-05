@@ -13,6 +13,7 @@ type Shipment struct {
 	NotificationEmail string
 	References        []string
 	Service           string
+	Dimensions        Dimensions
 
 	// Only used for international ground shipments
 	OriginatorName    string
@@ -128,7 +129,11 @@ func (s *Shipment) Weight() Weight {
 	}
 }
 
-func (s *Shipment) Dimensions() Dimensions {
+func (s *Shipment) ValidatedDimensions() Dimensions {
+	if s.Dimensions.IsValid() {
+		return s.Dimensions
+	}
+
 	switch s.ServiceType() {
 	case "SMART_POST":
 		return Dimensions{Length: 6, Width: 5, Height: 5, Units: "IN"}
@@ -245,7 +250,7 @@ func (s *Shipment) RequestedPackageLineItems() []RequestedPackageLineItem {
 		ItemDescription:    "ItemDescription",
 		CustomerReferences: s.CustomerReferences(),
 		Weight:             s.Weight(),
-		Dimensions:         s.Dimensions(),
+		Dimensions:         s.ValidatedDimensions(),
 	}}
 }
 

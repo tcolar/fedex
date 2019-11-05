@@ -226,6 +226,13 @@ type Dimensions struct {
 	Units  string `xml:"q0:Units"`
 }
 
+func (d Dimensions) IsValid() bool {
+	valuesAreValid := d.Length > 0 && d.Width > 0 && d.Height > 0
+	unitsIsValid := d.Units == "IN" || d.Units == "CM"
+
+	return valuesAreValid && unitsIsValid
+}
+
 type EmailDetail struct {
 	EmailAddress string `xml:"q0:EmailAddress"`
 	Name         string `xml:"q0:Name"`
