@@ -53,12 +53,23 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 
 	// Check if reply failed (FedEx responds with 200 even though it failed)
 	if err := response.Error(); err != nil {
-		logger.WithFields(logrus.Fields{
-			"url":      url,
-			"request":  string(reqXML),
-			"response": string(content),
-			"err":      err,
-		}).Error("error-response")
+		// Frequently, an error is thrown because a tracking number could not be found.
+		// This is business as usual for us, often we are looking up tracking numbers before
+		// they are queriable on the shipping service.
+		// In this case
+		//   --> we DO NOT log an error, it is not an error from the logging perspective
+		//   --> this is still considered an error from the code-level perspective,
+		//       so we still return the error
+		if false == err.Error().Contains("This tracking number cannot be found") {
+			logger.WithFields(logrus.Fields{
+				"url":      url,
+				"request":  string(reqXML),
+				"response": string(content),
+				"err":      err,
+			}).Error("error-response")
+		}
+
+		// return the error, even if we didn't log it
 		return fmt.Errorf("response error: %s", err)
 	}
 
