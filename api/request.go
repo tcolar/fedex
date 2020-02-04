@@ -60,7 +60,7 @@ func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelop
 		//   --> we DO NOT log an error, it is not an error from the logging perspective
 		//   --> this is still considered an error from the code-level perspective,
 		//       so we still return the error
-		if false == err.Error().Contains("This tracking number cannot be found") {
+		if false == strings.Contains(err.Error(), "This tracking number cannot be found") {
 			logger.WithFields(logrus.Fields{
 				"url":      url,
 				"request":  string(reqXML),
