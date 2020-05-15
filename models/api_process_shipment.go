@@ -30,11 +30,21 @@ func init() {
 }
 
 func (s *Shipment) ServiceType() string {
+	// TODO This is confusing. If the service is marked as "fedex_smart_post" or
+	// "fedex_international_economy" (this is done through the CMS), then
+	// explicitly set the service type as "SMART_POST" or "INTERNATIONAL_ECONOMY"
+	// respectively. Otherwise, we deduce the service type based on whether
+	// the service was "return", whether the return is international, and where
+	// the return is coming from. In the future, we should just not allow using
+	// anything other than "fedex_smart_post", "fedex_international_economy",
+	// "fedex_ground" and make the CMS user to be explicit. However currently
+	// there are many shipping methods that depend on this deduction logic.
 	switch {
 	case s.Service == "fedex_smart_post",
 		s.Service == "return" && !s.IsInternational():
 		return "SMART_POST"
-	case s.IsInternational() && s.FromAddress.ShipsOutWithInternationalEconomy():
+	case s.Service == "fedex_international_economy" ||
+		(s.IsInternational() && s.FromAddress.ShipsOutWithInternationalEconomy()):
 		return "INTERNATIONAL_ECONOMY"
 	default:
 		return "FEDEX_GROUND"
