@@ -128,6 +128,7 @@ func (s *Shipment) DropoffType() string {
 func (s *Shipment) Weight() Weight {
 	commoditiesWeight := s.Commodities.Weight()
 	if !commoditiesWeight.IsZero() && s.IsInternational() {
+		commoditiesWeight.Value += 0.5
 		return commoditiesWeight
 	}
 
