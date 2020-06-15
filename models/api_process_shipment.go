@@ -128,6 +128,9 @@ func (s *Shipment) DropoffType() string {
 func (s *Shipment) Weight() Weight {
 	commoditiesWeight := s.Commodities.Weight()
 	if !commoditiesWeight.IsZero() && s.IsInternational() {
+		// Add a little extra weight to the entire shipment weight, since adding floats
+		// in golang sometimes results in a float that is a little less than the actual
+		// sum, and then the FedEx API will return an error
 		commoditiesWeight.Value += 0.5
 		return commoditiesWeight
 	}
