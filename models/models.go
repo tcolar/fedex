@@ -228,7 +228,7 @@ type Dimensions struct {
 
 func (d Dimensions) IsValid() bool {
 	valuesAreValid := d.Length > 0 && d.Width > 0 && d.Height > 0
-	unitsIsValid := d.Units == "IN" || d.Units == "CM"
+	unitsIsValid := d.Units == DimensionsUnitsIn || d.Units == DimensionsUnitsCm
 
 	return valuesAreValid && unitsIsValid
 }
@@ -278,13 +278,6 @@ type EventNotificationDetail struct {
 	PersonalMessage    string              `xml:"q0:PersonalMessage"`
 	EventNotifications []EventNotification `xml:"q0:EventNotifications"`
 }
-
-// type EventNotificationDetailTracking struct {
-// 	Role                string              `xml:"q0:Role"`
-// 	Events              []string            `xml:"q0:Events"`
-// 	NotificationDetail  NotificationDetail  `xml:"q0:NotificationDetail"`
-// 	FormatSpecification FormatSpecification `xml:"q0:FormatSpecification"`
-// }
 
 type Format struct {
 	ImageType string `xml:"q0:ImageType"`
@@ -505,16 +498,16 @@ type RequestedPackageLineItem struct {
 }
 
 type RequestedShipment struct {
-	ShipTimestamp Timestamp `xml:"q0:ShipTimestamp"`
-	DropoffType   string    `xml:"q0:DropoffType"`
-	ServiceType   string    `xml:"q0:ServiceType"`
-	PackagingType string    `xml:"q0:PackagingType"`
+	ShipTimestamp     Timestamp `xml:"q0:ShipTimestamp"`
+	DropoffType       string    `xml:"q0:DropoffType"`
+	ServiceType       string    `xml:"q0:ServiceType,omitempty"`
+	PackagingType     string    `xml:"q0:PackagingType"`
+	PreferredCurrency string    `xml:"q0:PreferredCurrency,omitempty"`
 
 	// We don't use these, but may do so later
 	// ShipmentManifestDetail      *ShipmentManifestDetail      `xml:"q0:ShipmentManifestDetail,omitempty"`
 	// TotalWeight                 *Weight                      `xml:"q0:TotalWeight,omitempty"`
 	// TotalInsuredValue           *Money                       `xml:"q0:TotalInsuredValue,omitempty"`
-	// PreferredCurrency           string                       `xml:"q0:PreferredCurrency,omitempty"`
 	// ShipmentAuthorizationDetail *ShipmentAuthorizationDetail `xml:"q0:ShipmentAuthorizationDetail,omitempty"`
 
 	Shipper   Shipper `xml:"q0:Shipper"`

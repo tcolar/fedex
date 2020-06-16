@@ -30,30 +30,12 @@ func init() {
 }
 
 func (s *Shipment) ServiceType() string {
-	// TODO This is confusing. If the service is marked as "fedex_smart_post" or
-	// "fedex_international_economy" (this is done through the CMS), then
-	// explicitly set the service type as "SMART_POST" or "INTERNATIONAL_ECONOMY"
-	// respectively. Otherwise, we deduce the service type based on whether
-	// the service was "return", whether the return is international, and where
-	// the return is coming from. In the future, we should just not allow using
-	// anything other than "fedex_smart_post", "fedex_international_economy",
-	// "fedex_ground" and make the CMS user to be explicit. However currently
-	// there are many shipping methods that depend on this deduction logic.
-	switch {
-	case s.Service == "fedex_smart_post",
-		s.Service == "return" && !s.IsInternational():
-		return "SMART_POST"
-	case s.Service == "fedex_international_economy" ||
-		(s.IsInternational() && s.FromAddress.ShipsOutWithInternationalEconomy()):
-		return "INTERNATIONAL_ECONOMY"
-	default:
-		return "FEDEX_GROUND"
-	}
+	return ServiceType(s.FromAndTo, s.Service)
 }
 
 func (s *Shipment) Broker() string {
 	switch s.ServiceType() {
-	case "INTERNATIONAL_ECONOMY":
+	case ServiceTypeInternationalEconomy:
 		return "FedEx Express"
 	default:
 		return "FedEx Logistics"
@@ -70,7 +52,7 @@ func (s *Shipment) ShipTime() time.Time {
 }
 
 func (s *Shipment) ShippingDocumentSpecification() *ShippingDocumentSpecification {
-	if s.ServiceType() == "SMART_POST" || !s.IsInternational() {
+	if s.ServiceType() == ServiceTypeSmartPost || !s.IsInternational() {
 		return nil
 	}
 
@@ -80,20 +62,20 @@ func (s *Shipment) ShippingDocumentSpecification() *ShippingDocumentSpecificatio
 	}
 
 	return &ShippingDocumentSpecification{
-		ShippingDocumentTypes: []string{"COMMERCIAL_INVOICE"},
+		ShippingDocumentTypes: []string{DocumentTypeCommercialInvoice},
 		CommercialInvoiceDetail: []CommercialInvoiceDetail{
 			{
 				Format: Format{
-					ImageType: "PDF",
-					StockType: "PAPER_LETTER",
+					ImageType: ImageTypePDF,
+					StockType: StockTypePaperLetter,
 				},
 				CustomerImageUsages: []CustomerImageUsage{
 					{
-						Type: "LETTER_HEAD",
+						Type: CustomerImageUsageTypeLetterHead,
 						ID:   letterheadImageID,
 					},
 					{
-						Type: "SIGNATURE",
+						Type: CustomerImageUsageTypeSignature,
 						ID:   "IMAGE_2",
 					},
 				},
@@ -104,17 +86,17 @@ func (s *Shipment) ShippingDocumentSpecification() *ShippingDocumentSpecificatio
 
 func (s *Shipment) LabelSpecification() *LabelSpecification {
 	if s.IsInternational() {
-		stockType := "PAPER_4X6"
+		stockType := StockTypePaper4x6
 		return &LabelSpecification{
-			LabelFormatType: "COMMON2D",
-			ImageType:       "PDF",
+			LabelFormatType: LabelFormatTypeCommon2D,
+			ImageType:       ImageTypePDF,
 			LabelStockType:  &stockType,
 		}
 
 	}
 	return &LabelSpecification{
-		LabelFormatType: "COMMON2D",
-		ImageType:       "PNG",
+		LabelFormatType: LabelFormatTypeCommon2D,
+		ImageType:       ImageTypePNG,
 	}
 }
 
@@ -136,10 +118,10 @@ func (s *Shipment) Weight() Weight {
 	}
 
 	switch s.ServiceType() {
-	case "SMART_POST":
-		return Weight{Units: "LB", Value: 0.99}
+	case ServiceTypeSmartPost:
+		return Weight{Units: WeightUnitsLB, Value: 0.99}
 	default:
-		return Weight{Units: "LB", Value: 13}
+		return Weight{Units: WeightUnitsLB, Value: 13}
 	}
 }
 
@@ -149,10 +131,10 @@ func (s *Shipment) ValidatedDimensions() Dimensions {
 	}
 
 	switch s.ServiceType() {
-	case "SMART_POST":
-		return Dimensions{Length: 6, Width: 5, Height: 5, Units: "IN"}
+	case ServiceTypeSmartPost:
+		return Dimensions{Length: 6, Width: 5, Height: 5, Units: DimensionsUnitsIn}
 	default:
-		return Dimensions{Length: 13, Width: 13, Height: 13, Units: "IN"}
+		return Dimensions{Length: 13, Width: 13, Height: 13, Units: DimensionsUnitsIn}
 	}
 }
 
@@ -165,17 +147,17 @@ func (s *Shipment) SpecialServicesRequested() *SpecialServicesRequested {
 		returnShipmentDetail    *ReturnShipmentDetail
 	)
 
-	if s.ServiceType() == "SMART_POST" {
-		specialServiceTypes = append(specialServiceTypes, "RETURN_SHIPMENT")
+	if s.ServiceType() == ServiceTypeSmartPost {
+		specialServiceTypes = append(specialServiceTypes, SpecialServiceTypeReturnShipment)
 		returnShipmentDetail = &ReturnShipmentDetail{
-			ReturnType: "PRINT_RETURN_LABEL",
+			ReturnType: ReturnTypePrintReturnLabel,
 		}
 	}
 
 	if s.IsInternational() {
-		specialServiceTypes = append(specialServiceTypes, "ELECTRONIC_TRADE_DOCUMENTS")
+		specialServiceTypes = append(specialServiceTypes, SpecialServiceTypeElectronicTradeDocuments)
 		etdDetail = &EtdDetail{
-			RequestedDocumentCopies: "COMMERCIAL_INVOICE",
+			RequestedDocumentCopies: DocumentTypeCommercialInvoice,
 		}
 	}
 
@@ -200,14 +182,14 @@ func (s *Shipment) CustomerReferences() []CustomerReference {
 	customerReferences := make([]CustomerReference, len(s.References))
 	for idx, reference := range s.References {
 		switch s.ServiceType() {
-		case "SMART_POST":
+		case ServiceTypeSmartPost:
 			customerReferences[idx] = CustomerReference{
-				CustomerReferenceType: "RMA_ASSOCIATION",
+				CustomerReferenceType: CustomerReferenceTypeRMAAssociation,
 				Value:                 sanitizeReferenceForFedexAPI(reference),
 			}
 		default:
 			customerReferences[idx] = CustomerReference{
-				CustomerReferenceType: "CUSTOMER_REFERENCE",
+				CustomerReferenceType: CustomerReferenceTypeCustomerReference,
 				Value:                 sanitizeReferenceForFedexAPI(reference),
 			}
 		}
@@ -230,9 +212,9 @@ func sanitizeReferenceForFedexAPI(reference string) string {
 
 func defaultEventNotificationDetail(notificationEmail string) *EventNotificationDetail {
 	return &EventNotificationDetail{
-		AggregationType: "PER_SHIPMENT",
+		AggregationType: AggregationTypePerShipment,
 		EventNotifications: []EventNotification{{
-			Role: "SHIPPER",
+			Role: RoleShipper,
 			Events: []string{
 				"ON_DELIVERY",
 				"ON_ESTIMATED_DELIVERY",
@@ -260,7 +242,7 @@ func defaultEventNotificationDetail(notificationEmail string) *EventNotification
 func (s *Shipment) RequestedPackageLineItems() []RequestedPackageLineItem {
 	return []RequestedPackageLineItem{{
 		SequenceNumber:     1,
-		PhysicalPackaging:  "BAG",
+		PhysicalPackaging:  PackagingBag,
 		ItemDescription:    "ItemDescription",
 		CustomerReferences: s.CustomerReferences(),
 		Weight:             s.Weight(),
@@ -302,7 +284,7 @@ func (p *ProcessShipmentReply) LabelDataAndImageType() ([]byte, string, error) {
 
 func (p *ProcessShipmentReply) CommercialInvoiceDataAndImageType() ([]byte, string, error) {
 	for _, document := range p.CompletedShipmentDetail.ShipmentDocuments {
-		if document.Type == "COMMERCIAL_INVOICE" && len(document.Parts) > 0 {
+		if document.Type == DocumentTypeCommercialInvoice && len(document.Parts) > 0 {
 			return []byte(document.Parts[0].Image), document.ImageType, nil
 		}
 	}

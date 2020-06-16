@@ -26,12 +26,13 @@ func (a API) Rate(rate *models.Rate) (*models.RateReply, error) {
 }
 
 func (a API) rateRequest(rate *models.Rate) *models.Envelope {
-	rateRequestTypes := "LIST"
+	rateRequestTypes := models.RequestTypePreferred
 	packageCount := 1
-	serviceType := "FEDEX_GROUND"
-	if rate.FromAddress.ShipsOutWithInternationalEconomy() {
-		serviceType = "INTERNATIONAL_ECONOMY"
-	}
+
+	// When the service type is smartpost, getting rates from FedEx API doesn't
+	// work
+	serviceType := rate.ServiceType()
+	weight := rate.Weight()
 
 	return &models.Envelope{
 		Soapenv:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -58,10 +59,11 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 					},
 				},
 				RequestedShipment: models.RequestedShipment{
-					ShipTimestamp: models.Timestamp(time.Now()),
-					DropoffType:   "REGULAR_PICKUP",
-					ServiceType:   serviceType,
-					PackagingType: "YOUR_PACKAGING",
+					ShipTimestamp:     models.Timestamp(time.Now()),
+					DropoffType:       models.DropoffTypeRegularPickup,
+					ServiceType:       serviceType,
+					PackagingType:     models.PackagingTypeYourPackaging,
+					PreferredCurrency: models.PreferredCurrencyUSD,
 					Shipper: models.Shipper{
 						AccountNumber: a.Account,
 						Address:       rate.FromAndTo.FromAddress,
@@ -73,16 +75,18 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 						Contact:       rate.FromAndTo.ToContact,
 					},
 					ShippingChargesPayment: &models.Payment{
-						PaymentType: "SENDER",
+						PaymentType: models.PaymentTypeSender,
 						Payor: models.Payor{
 							ResponsibleParty: models.Shipper{
 								AccountNumber: a.Account,
 							},
 						},
 					},
+					SpecialServicesRequested: rate.SpecialServicesRequested(),
+					SmartPostDetail:          a.SmartPostDetail(serviceType),
 					LabelSpecification: &models.LabelSpecification{
-						LabelFormatType: "COMMON2D",
-						ImageType:       "PDF",
+						LabelFormatType: models.LabelFormatTypeCommon2D,
+						ImageType:       models.ImageTypePDF,
 					},
 					RateRequestTypes: &rateRequestTypes,
 					PackageCount:     &packageCount,
@@ -90,22 +94,19 @@ func (a API) rateRequest(rate *models.Rate) *models.Envelope {
 						{
 							SequenceNumber:    1,
 							GroupPackageCount: 1,
-							Weight: models.Weight{
-								Units: "LB",
-								Value: 40,
-							},
+							Weight:            weight,
 							Dimensions: models.Dimensions{
 								Length: 5,
 								Width:  5,
 								Height: 5,
-								Units:  "IN",
+								Units:  models.DimensionsUnitsIn,
 							},
-							PhysicalPackaging: "BAG",
+							PhysicalPackaging: models.PackagingBag,
 							ItemDescription:   "Stuff",
 							CustomerReferences: []models.CustomerReference{
 								{
-									CustomerReferenceType: "CUSTOMER_REFERENCE",
-									Value:                 "NAFTA_COO",
+									CustomerReferenceType: models.CustomerReferenceTypeCustomerReference,
+									Value:                 models.CustomerReferenceValueNaftaCoo,
 								},
 							},
 						},
