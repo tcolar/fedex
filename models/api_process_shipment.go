@@ -121,7 +121,7 @@ func (s *Shipment) Weight() Weight {
 	case ServiceTypeSmartPost:
 		return Weight{Units: WeightUnitsLB, Value: 0.99}
 	default:
-		return Weight{Units: WeightUnitsLB, Value: 13}
+		return Weight{Units: WeightUnitsLB, Value: 2}
 	}
 }
 
@@ -134,7 +134,7 @@ func (s *Shipment) ValidatedDimensions() Dimensions {
 	case ServiceTypeSmartPost:
 		return Dimensions{Length: 6, Width: 5, Height: 5, Units: DimensionsUnitsIn}
 	default:
-		return Dimensions{Length: 13, Width: 13, Height: 13, Units: DimensionsUnitsIn}
+		return Dimensions{Length: 10, Width: 5, Height: 5, Units: DimensionsUnitsIn}
 	}
 }
 
