@@ -128,9 +128,29 @@ func (c Commodities) CustomsValue() (Money, error) {
 }
 
 type CompletedPackageDetails struct {
-	SequenceNumber string
-	TrackingIds    []TrackingID
-	Label          Label
+	SequenceNumber    string
+	TrackingIds       []TrackingID
+	Label             Label
+	OperationalDetail PackageOperationalDetail
+}
+
+type PackageOperationalDetail struct {
+	Barcodes Barcodes
+}
+
+type Barcodes struct {
+	BinaryBarcodes BinaryBarcodes
+	StringBarcodes StringBarcode
+}
+
+type BinaryBarcodes struct {
+	Type  string
+	Value []byte
+}
+
+type StringBarcodes struct {
+	Type  string
+	Value string
 }
 
 type CompletedShipmentDetail struct {

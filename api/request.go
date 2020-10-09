@@ -21,8 +21,7 @@ func init() {
 	})
 }
 
-func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelope,
-	response models.Response) error {
+func (a API) makeRequestAndUnmarshalResponse(url string, request *models.Envelope, response models.Response) error {
 	// Create request body
 	reqXML, err := xml.Marshal(request)
 	if err != nil {
