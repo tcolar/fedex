@@ -252,6 +252,7 @@ func TestShipGround(t *testing.T) {
 		NotificationEmail: "dev-notifications@happyreturns.com",
 		References:        []string{"My ship ground reference - rothy's", "order number blah"},
 		Service:           "default",
+		InvoiceNumber:     "abc123",
 	}
 	reply, err := prodFedex.Ship(exampleShipment)
 	if err != nil {

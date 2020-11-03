@@ -14,6 +14,7 @@ type Shipment struct {
 	References        []string
 	Service           string
 	Dimensions        Dimensions
+	InvoiceNumber     string
 
 	// Only used for international ground shipments
 	OriginatorName    string
@@ -193,6 +194,13 @@ func (s *Shipment) CustomerReferences() []CustomerReference {
 				Value:                 sanitizeReferenceForFedexAPI(reference),
 			}
 		}
+	}
+
+	if s.InvoiceNumber != "" {
+		customerReferences = append(customerReferences, CustomerReference{
+			CustomerReferenceType: CustomerReferenceTypeInvoice,
+			Value:                 s.InvoiceNumber,
+		})
 	}
 	return customerReferences
 }

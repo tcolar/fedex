@@ -13,6 +13,7 @@ const (
 
 	CustomerReferenceTypeCustomerReference = "CUSTOMER_REFERENCE"
 	CustomerReferenceTypeRMAAssociation    = "RMA_ASSOCIATION"
+	CustomerReferenceTypeInvoice           = "INVOICE_NUMBER"
 	CustomerReferenceValueNaftaCoo         = "NAFTA_COO"
 
 	DimensionsUnitsIn = "IN"
